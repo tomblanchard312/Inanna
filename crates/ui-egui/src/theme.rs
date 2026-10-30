@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Brightness {
-    #[default]
     Light,
+    #[default]
     Dark,
 }
 
@@ -69,9 +69,9 @@ impl Tokens {
             hover: Color32::from_rgb(0xEB, 0xEB, 0xEB),
             pressed: Color32::from_rgb(0xDE, 0xDE, 0xDE),
             selected: Color32::from_rgb(0xE6, 0xE6, 0xE6),
-            accent: Color32::from_rgb(0xD9, 0x5A, 0x1A),
+            accent: Color32::from_rgb(0x25, 0x63, 0xEB),
             accent_text: Color32::WHITE,
-            contextual: Color32::from_rgb(0xC2, 0x4E, 0x14),
+            contextual: Color32::from_rgb(0x1D, 0x4E, 0xD8),
             selection: Color32::from_rgb(0x7A, 0x7A, 0x7A),
             handle_fill: Color32::WHITE,
             handle_stroke: Color32::from_rgb(0x6E, 0x6E, 0x6E),
@@ -101,9 +101,9 @@ impl Tokens {
             hover: Color32::from_rgb(0x40, 0x40, 0x40),
             pressed: Color32::from_rgb(0x4C, 0x4C, 0x4C),
             selected: Color32::from_rgb(0x47, 0x47, 0x47),
-            accent: Color32::from_rgb(0xF2, 0x6B, 0x1D),
+            accent: Color32::from_rgb(0x3B, 0x82, 0xF6),
             accent_text: Color32::WHITE,
-            contextual: Color32::from_rgb(0xF5, 0x8A, 0x4B),
+            contextual: Color32::from_rgb(0x60, 0xA5, 0xFA),
             selection: Color32::from_rgb(0xAA, 0xAA, 0xAA),
             handle_fill: Color32::WHITE,
             handle_stroke: Color32::from_rgb(0x6E, 0x6E, 0x6E),

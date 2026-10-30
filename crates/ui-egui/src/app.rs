@@ -2,8 +2,6 @@ use super::clock::{monotonic_secs, now_ms};
 use super::ime_hooks::ime_in_ui_pass_key;
 use super::services::{InboxEvent, Services};
 use super::state::{FilePlace, FilePurpose, ImeDescriptorKey, ImeDestination, ImeTerminalStamp, LocatedPlace, RECENT_MAX, UiState, ViewMode};
-#[cfg(not(target_arch = "wasm32"))]
-use super::updates_ui;
 use super::{
     AnimPreview, ControlRequest, FileTarget, HashMap, ImeCancelled, ImeComposition, ImeResetPhase, ImeTerminalPending, InputTarget, Mods,
     PendingFile, Perf, Receiver, Session, SlideApp, Target, UI_COMMANDS, UiRequest, Value, backstage, canvas, capture, dialogs, doc_window,
@@ -46,6 +44,8 @@ impl SlideApp {
             squiggles: Default::default(),
             dialog: None,
             thesaurus_query: String::new(),
+            #[cfg(not(target_arch = "wasm32"))]
+            scribe: crate::scribe::Scribe::default(),
             show: None,
             anim_preview: None,
             reuse_target: None,
@@ -77,8 +77,6 @@ impl SlideApp {
             integrated_titlebar: false,
             backstage: None,
             pending_urls: vec![],
-            #[cfg(not(target_arch = "wasm32"))]
-            updates_rt: updates_ui::Runtime::default(),
             pending_copy: None,
             capture: capture::Capture::default(),
             styled: false,
@@ -121,13 +119,6 @@ impl SlideApp {
 
     pub fn set_status(&mut self, msg: impl Into<String>) {
         self.status = Some((msg.into(), now_ms()));
-    }
-
-    /// Turn on the automatic check for a newer release at start-up (desktop shell only; tests and
-    /// the web build never touch the network on their own).
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn enable_update_checks(&mut self) {
-        updates_ui::enable(self);
     }
 
     /// A message that must be seen wherever the user is: a toast, which also shows over the start
@@ -215,7 +206,6 @@ impl SlideApp {
             self.drain_control(ctx);
             self.poll_opening();
             #[cfg(not(target_arch = "wasm32"))]
-            updates_ui::tick(self, ctx);
             // Inbox results are host file bytes and do not need fonts or a painted frame. A
             // window that starts hidden must still apply a file picked before its first UI pass.
             self.drain_inbox();
@@ -319,6 +309,8 @@ impl SlideApp {
             if self.session.active().is_none() {
                 return;
             }
+            #[cfg(not(target_arch = "wasm32"))]
+            crate::scribe::show(self, ui);
             match self.ui.view {
                 ViewMode::Sorter => sorter::show(self, ui),
                 ViewMode::NotesPage => sorter::notes_page(self, ui),
@@ -344,7 +336,6 @@ impl SlideApp {
         toast::show(self, &ctx);
         dialogs::show(self, &ctx);
         #[cfg(not(target_arch = "wasm32"))]
-        updates_ui::show(self, &ctx);
         menus::palette(self, &ctx);
         for url in std::mem::take(&mut self.pending_urls) {
             ctx.open_url(egui::OpenUrl::new_tab(url));

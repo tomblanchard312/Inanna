@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Build and package DeckCraft for FreeBSD:
+# Build and package Inanna for FreeBSD:
 #
-#   $DIST/deckcraft-<version>-freebsd-<arch>.tar.gz   bin/, share/ (desktop entry, icons, AppStream)
+#   $DIST/inanna-<version>-freebsd-<arch>.tar.gz   bin/, share/ (desktop entry, icons, AppStream)
 #
 # Usage: packaging/freebsd/package.sh [--skip-build]
 #
@@ -12,7 +12,7 @@ set -euo pipefail
 # shellcheck source=../common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 LINUX="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.deckcraft
+APP_ID=io.github.tomblanchard312.Inanna
 
 TARGET_ARGS=()
 BIN="$CARGO_TARGET_DIR/release"
@@ -49,28 +49,28 @@ case "$ARCH" in
   aarch64) MACHINE=" b7 00" ;;
   *) echo "error: no ELF machine check for arch '$ARCH'" >&2; exit 1 ;;
 esac
-for f in "$BIN/deckcraft" "$BIN/deckcraft-cli"; do
+for f in "$BIN/inanna" "$BIN/inanna-cli"; do
   [[ "$(od -An -tx1 -N6 "$f" 2>/dev/null)" == " 7f 45 4c 46 02 01" ]] || { echo "error: $f is not a 64-bit little-endian ELF" >&2; exit 1; }
   [[ "$(od -An -tx1 -j7 -N1 "$f")" =~ ^\ (00|09)$ ]] || { echo "error: $f is not a FreeBSD ELF (OSABI)" >&2; exit 1; }
   [[ "$(od -An -tx1 -j18 -N2 "$f")" == "$MACHINE" ]] || { echo "error: $f is not an ELF for $ARCH" >&2; exit 1; }
 done
 
-NAME="deckcraft-$VERSION-freebsd-$ARCH"
+NAME="inanna-$VERSION-freebsd-$ARCH"
 WORK="$CARGO_TARGET_DIR/freebsd-package"
 STAGE="$WORK/$NAME"
 rm -rf "$WORK"
-mkdir -p "$STAGE/bin" "$STAGE/share/applications" "$STAGE/share/metainfo" "$STAGE/share/mime/packages" "$STAGE/share/icons" "$STAGE/share/doc/deckcraft"
+mkdir -p "$STAGE/bin" "$STAGE/share/applications" "$STAGE/share/metainfo" "$STAGE/share/mime/packages" "$STAGE/share/icons" "$STAGE/share/doc/inanna"
 
-install -m 755 "$BIN/deckcraft" "$BIN/deckcraft-cli" "$STAGE/bin/"
-strip "$STAGE/bin/deckcraft" "$STAGE/bin/deckcraft-cli" 2>/dev/null || true
+install -m 755 "$BIN/inanna" "$BIN/inanna-cli" "$STAGE/bin/"
+strip "$STAGE/bin/inanna" "$STAGE/bin/inanna-cli" 2>/dev/null || true
 install -m 644 "$LINUX/$APP_ID.desktop" "$STAGE/share/applications/"
 install -m 644 "$LINUX/$APP_ID.mime.xml" "$STAGE/share/mime/packages/$APP_ID.xml"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$DECKCRAFT_BUILD_DATE/g" \
   "$LINUX/$APP_ID.metainfo.xml.in" >"$STAGE/share/metainfo/$APP_ID.metainfo.xml"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
-copy_docs "$STAGE/share/doc/deckcraft"
+copy_docs "$STAGE/share/doc/inanna"
 
 tar -C "$WORK" -czf "$DIST/$NAME.tar.gz" "$NAME"
-if [[ -z "${CARGO_BUILD_TARGET:-}" || "$CARGO_BUILD_TARGET" == "$(rustc -vV | sed -n 's/^host: //p')" ]]; then "$STAGE/bin/deckcraft-cli" --version; fi # a cross-built binary cannot run on the build host
+if [[ -z "${CARGO_BUILD_TARGET:-}" || "$CARGO_BUILD_TARGET" == "$(rustc -vV | sed -n 's/^host: //p')" ]]; then "$STAGE/bin/inanna-cli" --version; fi # a cross-built binary cannot run on the build host
 echo "wrote $DIST/$NAME.tar.gz"
 ls -lh "$DIST/$NAME.tar.gz"

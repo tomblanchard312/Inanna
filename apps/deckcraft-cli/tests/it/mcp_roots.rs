@@ -1,4 +1,4 @@
-//! `deckcraft-cli mcp` with the automation root flags, run as the real binary.
+//! `inanna-cli mcp` with the automation root flags, run as the real binary.
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ use std::process::{Command, Output, Stdio};
 use serde_json::Value;
 
 fn bin() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_deckcraft-cli"))
+    Command::new(env!("CARGO_BIN_EXE_inanna-cli"))
 }
 
 fn run(args: &[&str]) -> Output {
@@ -21,7 +21,7 @@ fn tmpdir(tag: &str) -> PathBuf {
     dir
 }
 
-/// Send `calls` (tool name, arguments) to `deckcraft-cli mcp <args>`; returns whether it exited
+/// Send `calls` (tool name, arguments) to `inanna-cli mcp <args>`; returns whether it exited
 /// cleanly, its stderr, and the stdout lines after `initialize`, one per call.
 fn mcp_session(args: &[&str], calls: &[(&str, Value)]) -> (bool, String, Vec<Value>) {
     let mut child = bin().arg("mcp").args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();

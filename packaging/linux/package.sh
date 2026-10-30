@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build and package DeckCraft for Linux (<arch> is x86_64 or aarch64, or riscv64 when cross-compiling):
+# Build and package Inanna for Linux (<arch> is x86_64 or aarch64, or riscv64 when cross-compiling):
 #
-#   $DIST/deckcraft-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
-#   $DIST/deckcraft-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
-#   $DIST/deckcraft-<version>-linux-<arch>.deb       Debian, Ubuntu, Mint, Pop!_OS, ...
-#   $DIST/deckcraft-<version>-linux-<arch>.rpm       Fedora, openSUSE, RHEL, ...
-#   $DIST/deckcraft-<version>-linux-<arch>.tar.gz    plain FHS-style tree (bin/, share/)
+#   $DIST/inanna-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
+#   $DIST/inanna-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
+#   $DIST/inanna-<version>-linux-<arch>.deb       Debian, Ubuntu, Mint, Pop!_OS, ...
+#   $DIST/inanna-<version>-linux-<arch>.rpm       Fedora, openSUSE, RHEL, ...
+#   $DIST/inanna-<version>-linux-<arch>.tar.gz    plain FHS-style tree (bin/, share/)
 #
 # Usage: packaging/linux/package.sh [--skip-build] [--formats "appimage deb rpm tar"]
 #
@@ -17,7 +17,7 @@ set -euo pipefail
 # shellcheck source=../common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.deckcraft
+APP_ID=io.github.tomblanchard312.Inanna
 
 verify_sha256() {
   local expected="$1"
@@ -43,10 +43,10 @@ case "$ARCH" in
   aarch64 | arm64) ARCH=aarch64; DEB_ARCH=arm64 ;;
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
-export DECKCRAFT_MAINTAINER="${DECKCRAFT_MAINTAINER:-DeckCraft maintainers <deckcraft@storyteller.ai>}"
-BASENAME="deckcraft-$VERSION-linux-$ARCH"
+export DECKCRAFT_MAINTAINER="${DECKCRAFT_MAINTAINER:-tomblanchard312}"
+BASENAME="inanna-$VERSION-linux-$ARCH"
 
-echo "==> DeckCraft $VERSION for Linux $ARCH ($FORMATS)"
+echo "==> Inanna $VERSION for Linux $ARCH ($FORMATS)"
 
 if [[ "$SKIP_BUILD" = 0 ]]; then
   if [[ -n "${CROSS_TARGET:-}" ]]; then
@@ -61,9 +61,9 @@ STAGE="$WORK/root"
 rm -rf "$WORK"
 
 # ---- stage an FHS tree (shared by every format) -------------------------------------------------
-install -Dm755 "$BIN/deckcraft" "$STAGE/usr/bin/deckcraft"
-install -Dm755 "$BIN/deckcraft-cli" "$STAGE/usr/bin/deckcraft-cli"
-"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/deckcraft" "$STAGE/usr/bin/deckcraft-cli" 2>/dev/null || true
+install -Dm755 "$BIN/inanna" "$STAGE/usr/bin/inanna"
+install -Dm755 "$BIN/inanna-cli" "$STAGE/usr/bin/inanna-cli"
+"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/inanna" "$STAGE/usr/bin/inanna-cli" 2>/dev/null || true
 install -Dm644 "$HERE/$APP_ID.desktop" "$STAGE/usr/share/applications/$APP_ID.desktop"
 install -Dm644 "$HERE/$APP_ID.mime.xml" "$STAGE/usr/share/mime/packages/$APP_ID.xml"
 mkdir -p "$STAGE/usr/share/metainfo"
@@ -71,8 +71,8 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$DECKCRAFT_BUILD_DATE/g" \
   "$HERE/$APP_ID.metainfo.xml.in" >"$STAGE/usr/share/metainfo/$APP_ID.metainfo.xml"
 mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
-mkdir -p "$STAGE/usr/share/doc/deckcraft"
-copy_docs "$STAGE/usr/share/doc/deckcraft"
+mkdir -p "$STAGE/usr/share/doc/inanna"
+copy_docs "$STAGE/usr/share/doc/inanna"
 
 if command -v desktop-file-validate >/dev/null; then
   desktop-file-validate "$STAGE/usr/share/applications/$APP_ID.desktop"
@@ -125,9 +125,9 @@ if has appimage; then
     echo "no pinned AppImage runtime for $ARCH; build the AppImage on x86_64 or aarch64" >&2
     exit 2
   fi
-  APPDIR="$WORK/DeckCraft.AppDir"
+  APPDIR="$WORK/Inanna.AppDir"
   cp -R "$STAGE" "$APPDIR"
-  ln -s usr/bin/deckcraft "$APPDIR/AppRun"
+  ln -s usr/bin/inanna "$APPDIR/AppRun"
   cp "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
   cp "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"
   ln -s "$APP_ID.png" "$APPDIR/.DirIcon"
@@ -170,8 +170,8 @@ if has appimage; then
   # fetch only the blocks that changed in a newer release, through the .zsync published next to
   # each AppImage on GitHub Releases. `latest` is the newest published release that is not a
   # pre-release. A fork's builds point at its own releases through GITHUB_REPOSITORY.
-  REPO="${GITHUB_REPOSITORY:-storytold/deckcraft}"
-  UPDATE_INFO="gh-releases-zsync|${REPO%%/*}|${REPO#*/}|latest|deckcraft-*-linux-$ARCH.AppImage.zsync"
+  REPO="${GITHUB_REPOSITORY:-tomblanchard312/Inanna}"
+  UPDATE_INFO="gh-releases-zsync|${REPO%%/*}|${REPO#*/}|latest|inanna-*-linux-$ARCH.AppImage.zsync"
   # Extract-and-run: works without FUSE (containers, CI). The output embeds the static runtime,
   # so users don't need libfuse2 either. With zsyncmake on the host (CI installs the zsync
   # package) appimagetool also writes the .zsync, into its working directory, hence the cd.
@@ -185,9 +185,9 @@ if has appimage; then
 fi
 
 if [[ -z "${CROSS_TARGET:-}" ]]; then
-  "$STAGE/usr/bin/deckcraft-cli" --version
+  "$STAGE/usr/bin/inanna-cli" --version
 elif [[ -n "${EMULATOR:-}" ]]; then
-  "$EMULATOR" "$STAGE/usr/bin/deckcraft-cli" --version
+  "$EMULATOR" "$STAGE/usr/bin/inanna-cli" --version
 fi
 echo "==> done"
 ls -lh "$DIST"
