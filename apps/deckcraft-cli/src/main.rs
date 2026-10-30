@@ -1,4 +1,4 @@
-//! Headless DeckCraft. `deckcraft-cli help` explains each subcommand (`help.rs`).
+//! Headless DeckCraft. `inanna-cli help` explains each subcommand (`help.rs`).
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 #![forbid(unsafe_code)]
 
@@ -47,7 +47,7 @@ fn main() -> ExitCode {
             },
         },
         Some("--version" | "-V" | "version") => {
-            outln!("deckcraft-cli {}", env!("CARGO_PKG_VERSION"));
+            outln!("inanna-cli {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
         Some("info") => report(info(rest)),
@@ -74,7 +74,7 @@ fn main() -> ExitCode {
         Some("mcp") => report(mcp(rest)),
         Some("links") => {
             use deckcraft_engine::links::{APP_PAGE, DISCORD, GITHUB, WEBSITE};
-            outln!("Discord   {DISCORD}\nWebsite   {WEBSITE}\nApp page  {APP_PAGE}\nGitHub    {GITHUB}");
+            outln!("Support   {DISCORD}\nWebsite   {WEBSITE}\nApp page  {APP_PAGE}\nGitHub    {GITHUB}");
             ExitCode::SUCCESS
         }
         Some(other) => unknown(other),
@@ -543,7 +543,7 @@ fn describe(id: Option<&str>) -> Result<(), String> {
     }
     let bare = params.is_empty() || params.iter().any(|p| params.iter().filter(|q| q.object == p.object).all(|q| q.optional));
     let call = if bare { c.id.to_string() } else { format!("'{}={{…}}'", c.id) };
-    outln!("\nRun it with: deckcraft-cli run --cmd {call}");
+    outln!("\nRun it with: inanna-cli run --cmd {call}");
     Ok(())
 }
 
@@ -587,8 +587,8 @@ fn app(args: &[String]) -> Result<(), String> {
             other => rest.push(other.to_string()),
         }
     }
-    let mut r = Remote::connect(&control_addr(&port))
-        .map_err(|e| format!("no DeckCraft app on port {port} ({e}); start it with `deckcraft --control {port}`"))?;
+    let mut r =
+        Remote::connect(&control_addr(&port)).map_err(|e| format!("no Inanna app on port {port} ({e}); start it with `inanna --control {port}`"))?;
     let parse = |s: Option<&String>| -> Result<Value, String> {
         s.map(|j| serde_json::from_str(j).map_err(|e| format!("bad JSON: {e}"))).transpose().map(|v| v.unwrap_or(json!({})))
     };

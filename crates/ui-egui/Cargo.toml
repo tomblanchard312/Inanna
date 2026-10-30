@@ -3,7 +3,7 @@ name = "deckcraft-ui-egui"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft egui frontend (PowerPoint-style UI); swappable — nothing below depends on it"
+description = "Inanna egui frontend (PowerPoint-style UI); swappable — nothing below depends on it"
 
 [lints]
 workspace = true
@@ -26,7 +26,11 @@ log = { workspace = true }
 web-time = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-craft-update = { workspace = true }
+sharedai-client = { git = "https://github.com/tomblanchard312/Qanloom", rev = "3d75b6a77231ade0c906140e16f9ef66613e0b29" }
+sharedai-protocol = { git = "https://github.com/tomblanchard312/Qanloom", rev = "3d75b6a77231ade0c906140e16f9ef66613e0b29" }
+tokio = { version = "1.53.3", features = ["rt", "time", "net", "sync"] }
+base64 = "0.22"
+image = { workspace = true }
 
 [dev-dependencies]
 skrifa = { workspace = true }

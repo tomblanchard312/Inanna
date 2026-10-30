@@ -2,6 +2,10 @@ use super::{Icon, SlideApp, Target, Ui, big_button, big_button_ex, group, json, 
 
 pub(super) fn view(app: &mut SlideApp, ui: &mut Ui) {
     use crate::ViewMode;
+    #[cfg(not(target_arch = "wasm32"))]
+    group(ui, |ui| {
+        crate::scribe::button(app, ui);
+    });
     group(ui, |ui| {
         for (icon, label, id, mode) in [
             (Icon::ViewNormal, "Normal", "view.normal", Some(ViewMode::Normal)),

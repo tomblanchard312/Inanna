@@ -103,3 +103,13 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Inanna additions (2026-10-30)
+-----------------------------
+Inanna is an independent fork. Original copyrights and notices above are retained.
+Scribe's blue folded-page icon is original Nisaba contributor artwork, licensed
+MIT OR Apache-2.0; source and revision are recorded in ATTRIBUTION.md.
+The Enki client and protocol dependency is pinned to the published Nisaba snapshot
+at tomblanchard312/Qanloom commit 3d75b6a77231ade0c906140e16f9ef66613e0b29.
+Those packages retain their UNLICENSED designation and are not relicensed by this
+application's MIT OR Apache-2.0 terms. No new license grant is made by this notice.

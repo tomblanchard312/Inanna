@@ -14,12 +14,12 @@ fn main() {
     }
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/app-icon/deckcraft.ico")
-        .set("ProductName", "DeckCraft")
-        .set("FileDescription", "DeckCraft presentations")
-        .set("CompanyName", "Learning Machines LLC")
+        .set("ProductName", "Inanna")
+        .set("FileDescription", "Inanna presentations")
+        .set("CompanyName", "tomblanchard312")
         .set("LegalCopyright", "Copyright (c) the DeckCraft authors. MIT OR Apache-2.0.")
-        .set("OriginalFilename", "deckcraft.exe")
-        .set("InternalName", "deckcraft");
+        .set("OriginalFilename", "inanna.exe")
+        .set("InternalName", "inanna");
     if let Err(e) = res.compile() {
         if std::env::var_os("DECKCRAFT_REQUIRE_WINRES").is_some() {
             eprintln!("embedding Windows resources failed: {e}");
