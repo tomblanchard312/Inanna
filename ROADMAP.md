@@ -1,3 +1,5 @@
+> Inanna fork: this document records the inherited DeckCraft baseline. See [Inanna integration roadmap](docs/inanna-roadmap.md) for fork plans and validation gates.
+
 # DeckCraft roadmap
 
 **Stage: alpha** · next: beta, ~20 points and ~120–210 h away
