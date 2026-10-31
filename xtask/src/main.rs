@@ -199,6 +199,14 @@ fn cmd_ci() -> Result<(), String> {
         ),
         ("pdf-deps", Box::new(|| pdf_deps::run(&root()))),
         (
+            "enki-packaging",
+            Box::new(|| {
+                let mut c = Command::new(if cfg!(windows) { "python" } else { "python3" });
+                c.current_dir(root()).arg("packaging/test_enki_runtime.py");
+                run(c, "Enki binary packaging regression checks")
+            }),
+        ),
+        (
             "clippy",
             Box::new(|| {
                 let mut c = cargo();

@@ -47,6 +47,7 @@ modules:
       # Already has the release's version and date substituted by package.sh.
       - install -Dm644 share/metainfo/io.github.tomblanchard312.Inanna.metainfo.xml /app/share/metainfo/io.github.tomblanchard312.Inanna.metainfo.xml
       - mkdir -p /app/share/icons /app/share/doc && cp -R share/icons/hicolor /app/share/icons/ && cp -R share/doc/inanna /app/share/doc/
+      - mkdir -p /app/lib/inanna && cp -R lib/inanna/enki /app/lib/inanna/enki
     sources:
       - type: dir
         path: stage
