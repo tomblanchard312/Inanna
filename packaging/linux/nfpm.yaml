@@ -31,6 +31,8 @@ overrides:
     depends:
       - libc6 (>= 2.35)
       - libgcc-s1
+      - libgomp1
+      - libstdc++6
       - libxkbcommon0
       - libasound2 | libasound2t64
       - libvulkan1 | libegl1
@@ -45,6 +47,8 @@ overrides:
       - xdg-desktop-portal
   rpm:
     depends:
+      - libgomp
+      - libstdc++
       - libxkbcommon
       - alsa-lib
       - (vulkan-loader or libglvnd-egl)
@@ -58,6 +62,9 @@ overrides:
       - xdg-desktop-portal
 
 contents:
+  - src: ${STAGE}/usr/lib/inanna/enki/
+    dst: /usr/lib/inanna/enki/
+    type: tree
   - src: ${STAGE}/usr/bin/inanna
     dst: /usr/bin/inanna
     file_info: { mode: 0755 }

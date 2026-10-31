@@ -74,6 +74,8 @@ cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
 mkdir -p "$STAGE/usr/share/doc/inanna"
 copy_docs "$STAGE/usr/share/doc/inanna"
 
+python3 "$ROOT/packaging/stage-enki.py" --target "${CROSS_TARGET:-$ARCH-unknown-linux-gnu}" --out "$STAGE/usr/lib/inanna/enki"
+
 if command -v desktop-file-validate >/dev/null; then
   desktop-file-validate "$STAGE/usr/share/applications/$APP_ID.desktop"
 fi
