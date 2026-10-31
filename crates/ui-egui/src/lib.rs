@@ -210,6 +210,8 @@ struct InputTarget {
 
 pub struct SlideApp {
     #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) speech: enki_speech_ui::SpeechTools,
+    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) scribe: scribe::Scribe,
     /// Shape Fill's last colour (a command colour parameter): the button applies it again. Accent 1 until one is picked.
     pub last_fill: serde_json::Value,
@@ -480,3 +482,6 @@ mod inbox_tests;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(not(target_arch = "wasm32"))]
+mod speech;

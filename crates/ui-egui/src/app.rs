@@ -33,6 +33,8 @@ impl SlideApp {
     pub fn new(session: Session, mut services: Services) -> Self {
         let audio_out = services.audio_out.take();
         SlideApp {
+            #[cfg(not(target_arch = "wasm32"))]
+            speech: enki_speech_ui::SpeechTools::new("inanna"),
             last_fill: serde_json::json!("accent1"),
             last_outline: serde_json::json!("tx1"),
             table_pen: serde_json::json!({"width": 1.0}),
@@ -253,6 +255,9 @@ impl SlideApp {
             return;
         }
         self.ui_inner(ui);
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::speech::show(self, &ctx);
+
         // The last writer (all panels, dialogs, the custom producer and deferred child windows)
         // has run. Observe the actual custom descriptor for this pass, then reconcile the reset
         // lifetime against the actual committed output. This also runs for discarded passes.
