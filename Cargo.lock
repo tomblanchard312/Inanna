@@ -1540,7 +1540,7 @@ checksum = "66b7e2430c6dff6a955451e2cfc438f09cea1965a9d6f87f7e3b90decc014099"
 [[package]]
 name = "enki-speech-ui"
 version = "0.2.0"
-source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=23597b193c24a43273dc86812fa87dbb8f129fe5#23597b193c24a43273dc86812fa87dbb8f129fe5"
+source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=719d09989e86593ed84c6129d829df6a2e8ab1d0#719d09989e86593ed84c6129d829df6a2e8ab1d0"
 dependencies = [
  "cpal",
  "egui",
@@ -4183,7 +4183,7 @@ dependencies = [
 [[package]]
 name = "sharedai-client"
 version = "0.1.0"
-source = "git+https://github.com/tomblanchard312/Qanloom?rev=3d75b6a77231ade0c906140e16f9ef66613e0b29#3d75b6a77231ade0c906140e16f9ef66613e0b29"
+source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=719d09989e86593ed84c6129d829df6a2e8ab1d0#719d09989e86593ed84c6129d829df6a2e8ab1d0"
 dependencies = [
  "base64",
  "libc",
@@ -4197,7 +4197,7 @@ dependencies = [
 [[package]]
 name = "sharedai-client"
 version = "0.2.0"
-source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=23597b193c24a43273dc86812fa87dbb8f129fe5#23597b193c24a43273dc86812fa87dbb8f129fe5"
+source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=719d09989e86593ed84c6129d829df6a2e8ab1d0#719d09989e86593ed84c6129d829df6a2e8ab1d0"
 dependencies = [
  "base64",
  "libc",
@@ -4211,7 +4211,7 @@ dependencies = [
 [[package]]
 name = "sharedai-protocol"
 version = "0.1.0"
-source = "git+https://github.com/tomblanchard312/Qanloom?rev=3d75b6a77231ade0c906140e16f9ef66613e0b29#3d75b6a77231ade0c906140e16f9ef66613e0b29"
+source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=719d09989e86593ed84c6129d829df6a2e8ab1d0#719d09989e86593ed84c6129d829df6a2e8ab1d0"
 dependencies = [
  "serde",
  "tokio",
@@ -4221,7 +4221,7 @@ dependencies = [
 [[package]]
 name = "sharedai-protocol"
 version = "0.2.0"
-source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=23597b193c24a43273dc86812fa87dbb8f129fe5#23597b193c24a43273dc86812fa87dbb8f129fe5"
+source = "git+https://github.com/tomblanchard312/Qanloom.git?rev=719d09989e86593ed84c6129d829df6a2e8ab1d0#719d09989e86593ed84c6129d829df6a2e8ab1d0"
 dependencies = [
  "serde",
  "serde_json",
