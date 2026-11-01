@@ -63,7 +63,7 @@ fn command_for(purpose: FilePurpose, name: &str, bytes: &[u8]) -> Result<&'stati
         FilePurpose::Open => open_command(name),
         FilePurpose::Infer => infer_command(name, bytes),
     };
-    cmd.ok_or_else(|| format!("{name}: DeckCraft can't open this kind of file"))
+    cmd.ok_or_else(|| format!("{name}: Inanna can't open this kind of file"))
 }
 
 impl SlideApp {
@@ -139,7 +139,7 @@ impl SlideApp {
             "deckcraft" => ("deckcraft", "deckcraft", false),
             "gif" => ("gif", "gif", false),
             other => {
-                self.set_status(format!("DeckCraft can't export “{other}”"));
+                self.set_status(format!("Inanna can't export “{other}”"));
                 return false;
             }
         };
@@ -196,7 +196,7 @@ impl SlideApp {
         }
     }
 
-    /// File › Print: DeckCraft prints through a PDF. On the desktop the PDF (with the Print page's
+    /// File › Print: Inanna prints through a PDF. On the desktop the PDF (with the Print page's
     /// layout, slides and options) is written to the temporary folder and opened in the system's
     /// PDF viewer, which has the printers; on the web it downloads.
     pub fn print_pdf(&mut self, params: Value) -> bool {

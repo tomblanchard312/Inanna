@@ -101,7 +101,7 @@ fn options_cancel_puts_the_appearance_and_scale_back() {
 
     h.query_by_label("Dark appearance").expect("the checkbox is there").click();
     h.run_steps(2);
-    assert!(dark(h.state()), "the appearance applies as it is toggled");
+    assert_ne!(dark(h.state()), dark_before, "the appearance applies as it is toggled");
 
     // Clicking the slider's middle sets it near the middle of its range, away from the default.
     interface_size(&h).click();

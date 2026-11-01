@@ -162,7 +162,7 @@ fn load_within(bytes: &[u8], budget: Budget) -> Result<(Presentation, Vec<String
         let name = format!("media/{}", item.id.0);
         let linked_only = item.link.is_some() && z.index_for_name(&name).is_none();
         if z.by_name(&name).is_ok_and(|f| f.size() > left) {
-            return Err(FormatError::Damaged("embedded media is larger than DeckCraft can open".into()));
+            return Err(FormatError::Damaged("embedded media is larger than Inanna can open".into()));
         }
         match read_entry_max(&mut z, &name, left.min(MAX_ENTRY)) {
             Ok(data) => {

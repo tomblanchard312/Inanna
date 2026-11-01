@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <?ifndef HasCraftFontLicences ?>
+  <?define HasCraftFontLicences=0 ?>
+  <?endif?>
+  <Package Name="Inanna" Manufacturer="tomblanchard312" Version="$(var.Version)" UpgradeCode="A50F880C-7E38-4C68-BD4B-B5E40C6646C3" Scope="perUserOrMachine" Compressed="yes" Language="1033">
+    <SummaryInformation Description="Inanna presentations and slide shows" Manufacturer="tomblanchard312" />
+    <?include $(sys.SOURCEFILEDIR)install-policy.wxi?>
+    <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
+         (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of Inanna is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="DeckcraftIcon.ico" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="DeckcraftIcon.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/tomblanchard312/Inanna" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/tomblanchard312/Inanna" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/tomblanchard312/Inanna/issues" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="CraftSuiteFolder" Name="Inanna">
+        <Directory Id="INSTALLFOLDER" Name="Inanna" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="Inanna" Level="1">
+      <?if $(var.HasCraftFontLicences) = 1 ?>
+      <ComponentGroupRef Id="CraftFontLicences" />
+      <?endif?>
+      <ComponentGroupRef Id="DeckcraftFiles" />
+    </Feature>
+  <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2" Condition="NOT Installed" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="NOT Installed" />
+    </UI>
+  </Package>
+
+  <Fragment>
+    <?if $(var.HasCraftFontLicences) = 1 ?>
+    <ComponentGroup Id="CraftFontLicences" Directory="INSTALLFOLDER">
+      <Files Include="$(var.DocsDir)\**" />
+    </ComponentGroup>
+    <?endif?>
+    <ComponentGroup Id="DeckcraftFiles" Directory="INSTALLFOLDER">
+      <Component Id="DeckcraftApp" Guid="E5E521CD-F469-432F-8ADA-8114D043DEE5">
+        <File Id="InannaMit" Source="$(var.BinDir)\LICENSE-MIT" KeyPath="no" />
+        <File Id="InannaApache" Source="$(var.BinDir)\LICENSE-APACHE" KeyPath="no" />
+        <File Id="DeckcraftNotice" Source="$(var.BinDir)\NOTICE" KeyPath="no" />
+        <File Id="DeckcraftExe" Source="$(var.BinDir)\inanna.exe" KeyPath="yes">
+          <!-- No Icon here, so the shortcut shows the icon embedded in inanna.exe (build.rs). An
+               MSI Icon is cached under %APPDATA%\Microsoft\Installer\{ProductCode}\, and every
+               update is a major upgrade with a new ProductCode that deletes the old folder. A
+               taskbar pin is a copy of this shortcut that the update never touches, so it kept
+               pointing at the deleted file and lost its icon (#1114). The exe's path survives
+               updates; the shortcut is not advertised, so it targets that path and its icon is the
+               exe's own. The Icon above stays for ARPPRODUCTICON (Apps and features). -->
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Inanna" Description="Inanna presentations and slide shows" WorkingDirectory="INSTALLFOLDER" Advertise="no" />
+        </File>
+
+        <!-- .inanna: Inanna's own format. -->
+        <ProgId Id="Inanna.Presentation" Description="Inanna Presentation" Icon="DeckcraftExe" IconIndex="0">
+          <Extension Id="deckcraft" ContentType="application/x-deckcraft">
+            <Verb Id="open" Command="Open" TargetFile="DeckcraftExe" Argument="&quot;%1&quot;" />
+          </Extension>
+        </ProgId>
+
+        <!-- "Open with" for PowerPoint formats, without becoming the default. -->
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\inanna.exe" Name="FriendlyAppName" Value="Inanna" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\inanna.exe\shell\open\command" Value="&quot;[#DeckcraftExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\inanna.exe\SupportedTypes" Name=".deckcraft" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\inanna.exe\SupportedTypes" Name=".pptx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\inanna.exe\SupportedTypes" Name=".potx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\inanna.exe\SupportedTypes" Name=".ppsx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.pptx\OpenWithProgids" Name="Inanna.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.potx\OpenWithProgids" Name="Inanna.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.ppsx\OpenWithProgids" Name="Inanna.Presentation" Value="" Type="string" />
+
+        <RegistryValue Root="HKMU" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\inanna.exe" Value="[#DeckcraftExe]" Type="string" />
+      <RegistryValue Root="HKMU" Key="Software\Inanna" Name="InstallDir" Value="[INSTALLFOLDER]" Type="string" />
+      </Component>
+
+      <Component Id="DeckcraftCli">
+        <File Id="DeckcraftCliExe" Source="$(var.BinDir)\inanna-cli.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

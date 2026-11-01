@@ -4,7 +4,7 @@
 #   assets/app-icon/deckcraft.ico    Windows (16–256 px, from hicolor/*)
 #   assets/app-icon/deckcraft.icns   macOS (16–1024 px, from deckcraft-1024.png; needs sips + iconutil)
 #
-# The PNGs themselves are rendered by DeckCraft from assets/app-icon/icon-source.deckcraft.
+# The PNGs are rendered from assets/app-icon/hicolor/scalable/apps/io.github.tomblanchard312.Inanna.svg.
 # The outputs are committed, so builds and packaging never need these tools; package scripts
 # call this only when an output is missing.
 #
@@ -12,7 +12,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR="$ROOT/assets/app-icon"
-ID="ai.storyteller.deckcraft"
+ID="io.github.tomblanchard312.Inanna"
 SRC="$DIR/deckcraft-1024.png"
 WANT="${*:-ico icns}"
 TMP="$(mktemp -d)"
@@ -32,7 +32,7 @@ esac
 case " $WANT " in
   *" icns "*)
     if command -v iconutil >/dev/null && command -v sips >/dev/null; then
-      SET="$TMP/deckcraft.iconset"
+      SET="$TMP/inanna.iconset"
       mkdir -p "$SET"
       for s in 16 32 128 256 512; do
         sips -z "$s" "$s" "$SRC" --out "$SET/icon_${s}x${s}.png" >/dev/null
@@ -42,7 +42,7 @@ case " $WANT " in
       iconutil -c icns -o "$DIR/deckcraft.icns" "$SET"
       echo "wrote $DIR/deckcraft.icns"
     else
-      echo "warning: sips/iconutil not found (macOS only); deckcraft.icns not regenerated" >&2
+      echo "warning: sips/iconutil not found (macOS only); inanna.icns not regenerated" >&2
     fi
     ;;
 esac

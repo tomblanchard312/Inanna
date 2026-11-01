@@ -2,7 +2,7 @@
 //!
 //! Usage: `deckcraft [--control <port>] [--sample] [--show] [files…]`
 //! A PowerPoint Show (`.ppsx`) given last starts its slide show, as a double-click does in PowerPoint.
-//! `deckcraft --help` prints the flags and exits. `deckcraft --version` prints the version and exits.
+//! `inanna --help` prints the flags and exits. `inanna --version` prints the version and exits.
 //!
 //! `--control <port>` (or `DECKCRAFT_CONTROL_PORT`) starts a localhost JSON-lines control server:
 //! `{"id":1,"method":"ui.inspect","params":{}}` → `{"id":1,"ok":true,"result":…}`.
@@ -67,14 +67,14 @@ impl eframe::App for App {
 /// The per-user settings directory: `ui.json`, `prefs.json` and `logs/` live here.
 fn config_dir() -> Option<std::path::PathBuf> {
     if cfg!(target_os = "macos") {
-        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join("Library/Application Support/DeckCraft"))
+        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join("Library/Application Support/Inanna"))
     } else if cfg!(windows) {
-        std::env::var_os("APPDATA").map(|a| std::path::PathBuf::from(a).join("DeckCraft"))
+        std::env::var_os("APPDATA").map(|a| std::path::PathBuf::from(a).join("Inanna"))
     } else {
         std::env::var_os("XDG_CONFIG_HOME")
             .map(std::path::PathBuf::from)
             .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config")))
-            .map(|c| c.join("deckcraft"))
+            .map(|c| c.join("inanna"))
     }
 }
 
@@ -115,7 +115,7 @@ fn services() -> Services {
                 "theme" => d.add_filter("Themes and presentations", &["thmx", "pptx", "potx", "ppsx"]).add_filter("Office Theme", &["thmx"]),
                 _ => d
                     .add_filter("Presentations", &["deckcraft", "pptx", "potx", "ppsx"])
-                    .add_filter("DeckCraft", &["deckcraft"])
+                    .add_filter("Inanna", &["deckcraft"])
                     .add_filter("PowerPoint", &["pptx", "potx", "ppsx"])
                     .add_filter("Outline", &["txt", "md"]),
             };
@@ -135,10 +135,10 @@ fn services() -> Services {
     }
 }
 
-const APP_ID: &str = "ai.storyteller.deckcraft";
+const APP_ID: &str = "io.github.tomblanchard312.Inanna";
 
 const USAGE: &str = "\
-Usage: deckcraft [--control PORT] [--sample] [--show] [FILE...]
+Usage: inanna [--control PORT] [--sample] [--show] [FILE...]
 
   --control PORT  JSON control server on 127.0.0.1:PORT
   --sample        open the sample presentation
@@ -177,7 +177,7 @@ fn startup(mut control_port: Option<u16>, args: impl IntoIterator<Item = String>
 }
 
 fn app_icon() -> Option<egui::IconData> {
-    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.deckcraft.png");
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/io.github.tomblanchard312.Inanna.png");
     eframe::icon_data::from_png_bytes(png).map_err(|e| log::warn!("app icon: {e}")).ok()
 }
 
@@ -187,13 +187,6 @@ fn main() -> eframe::Result {
     // First, so every start-up record (and the engine's panic hook, installed with the first
     // Session) is captured; see `logging`.
     let logger = logging::install();
-    if let Some(done) = craft_update::self_update::finish(&deckcraft_ui_egui::UPDATE_APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
-        if let Err(e) = done {
-            eprintln!("DeckCraft update helper failed: {e}");
-            std::process::exit(1);
-        }
-        return Ok(());
-    }
     let (control_port, files, sample, show) =
         match startup(std::env::var("DECKCRAFT_CONTROL_PORT").ok().and_then(|p| p.parse().ok()), std::env::args().skip(1)) {
             Startup::Help => {
@@ -201,12 +194,12 @@ fn main() -> eframe::Result {
                 return Ok(());
             }
             Startup::Version => {
-                println!("deckcraft {}", env!("CARGO_PKG_VERSION"));
+                println!("inanna {}", env!("CARGO_PKG_VERSION"));
                 return Ok(());
             }
             Startup::Run { control_port, files, sample, show } => (control_port, files, sample, show),
         };
-    log::info!("DeckCraft {} ({} {})", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
+    log::info!("Inanna {} ({} {})", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
     // The log file lives under the settings directory; opened after the arguments, so `--help` and
     // `--version` leave no file behind. Records logged until now are written to it first.
     if let Some(logger) = logger {
@@ -221,7 +214,7 @@ fn main() -> eframe::Result {
     }
     let mut options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("DeckCraft")
+            .with_title("Inanna")
             .with_inner_size([1440.0, 900.0])
             .with_min_inner_size([900.0, 560.0])
             .with_drag_and_drop(true)
@@ -241,7 +234,7 @@ fn main() -> eframe::Result {
         display::Choice::None => {
             // winit's own error says little to someone who started DeckCraft from a console.
             log::error!("no display: DISPLAY and WAYLAND_DISPLAY are not set");
-            eprintln!("DeckCraft needs a graphical session: neither DISPLAY nor WAYLAND_DISPLAY is set.");
+            eprintln!("Inanna needs a graphical session: neither DISPLAY nor WAYLAND_DISPLAY is set.");
             false
         }
     };
@@ -262,13 +255,12 @@ fn main() -> eframe::Result {
     #[cfg(target_os = "macos")]
     let apple_events = &apple_events;
     eframe::run_native(
-        "DeckCraft",
+        "Inanna",
         options,
         Box::new(move |cc| {
             deckcraft_ui_egui::install_ime_pass_hooks(&cc.egui_ctx);
             let mut app = SlideApp::new(Session::new(), services());
             load_prefs(&mut app);
-            app.enable_update_checks();
             // AutoRecover: reopen what a previous run left unsaved, then keep it current.
             if std::env::var_os("DECKCRAFT_NO_RECOVERY").is_none() {
                 app.session.recovery_dir = deckcraft_engine::recovery::default_dir();
@@ -389,8 +381,8 @@ mod tests {
     #[test]
     fn every_desktop_offers_the_same_file_types() {
         let plist = include_str!("../../../packaging/macos/Info.plist.in");
-        let wxs = include_str!("../../../packaging/windows/deckcraft.wxs");
-        let desktop = include_str!("../../../packaging/linux/ai.storyteller.deckcraft.desktop");
+        let wxs = include_str!("../../../packaging/windows/inanna.wxs");
+        let desktop = include_str!("../../../packaging/linux/io.github.tomblanchard312.Inanna.desktop");
 
         let mut mac = plist_strings(plist, "CFBundleTypeExtensions");
         // The native type is declared by its UTI; its extension is in the exported type.
@@ -436,7 +428,7 @@ mod tests {
     /// take the icon embedded in `deckcraft.exe`; only `ARPPRODUCTICON` uses the MSI `<Icon>`.
     #[test]
     fn windows_shortcuts_use_the_icon_embedded_in_the_exe() {
-        let wxs = include_str!("../../../packaging/windows/deckcraft.wxs");
+        let wxs = include_str!("../../../packaging/windows/inanna.wxs");
         let shortcuts: Vec<&str> = wxs.split("<Shortcut").skip(1).filter_map(|s| s.split("/>").next()).collect();
         assert!(!shortcuts.is_empty(), "deckcraft.wxs has no shortcut");
         for shortcut in shortcuts {

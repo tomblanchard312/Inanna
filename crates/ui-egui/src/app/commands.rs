@@ -1,6 +1,6 @@
-#[cfg(not(target_arch = "wasm32"))]
-use super::updates_ui;
 use super::{SlideApp, UI_COMMANDS, Value, ViewMode, backstage, dialogs, doc_window, json, media, qat, theme};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::updates_ui;
 
 fn grid_options_touched(p: &Value) -> bool {
     ["spacing", "snap", "smartGuides", "gridlines", "guides"].iter().any(|k| p.get(*k).is_some())
@@ -219,6 +219,14 @@ impl SlideApp {
                     return Err("nothing to print: no presentation is open".into());
                 }
                 return Ok(json!({"printed": self.print_pdf(p.clone())}));
+            }
+            "app.scribe" => {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    self.scribe.open = p.get("on").and_then(Value::as_bool).unwrap_or(true);
+                }
+                #[cfg(target_arch = "wasm32")]
+                return Err("Scribe is available in the desktop app".into());
             }
             "app.about" => self.dialog = Some(dialogs::Dialog::new("about")),
             "app.checkUpdates" => {

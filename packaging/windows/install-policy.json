@@ -1,9 +1,9 @@
 {
-  "id": "deckcraft",
-  "name": "DeckCraft",
-  "upgradeCode": "6F9C69E7-7825-40D2-BF26-C274DA676425",
+  "id": "inanna",
+  "name": "Inanna",
+  "upgradeCode": "A50F880C-7E38-4C68-BD4B-B5E40C6646C3",
   "sources": [
-    "deckcraft.wxs"
+    "inanna.wxs"
   ],
   "icon": "assets/app-icon/deckcraft.ico",
   "localization": [],
@@ -11,68 +11,70 @@
     "UI"
   ],
   "payloads": [
+    "LICENSE-MIT",
+    "LICENSE-APACHE",
     "NOTICE",
-    "deckcraft-cli.exe",
-    "deckcraft.exe"
+    "inanna-cli.exe",
+    "inanna.exe"
   ],
   "registry": [
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe",
+      "Software\\Classes\\Applications\\inanna.exe",
       "FriendlyAppName",
-      "DeckCraft"
+      "Inanna"
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\shell\\open\\command",
+      "Software\\Classes\\Applications\\inanna.exe\\shell\\open\\command",
       "",
       "\"[#DeckcraftExe]\" \"%1\""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\inanna.exe\\SupportedTypes",
       ".deckcraft",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\inanna.exe\\SupportedTypes",
       ".pptx",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\inanna.exe\\SupportedTypes",
       ".potx",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\inanna.exe\\SupportedTypes",
       ".ppsx",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.pptx\\OpenWithProgids",
-      "DeckCraft.Presentation",
+      "Inanna.Presentation",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.potx\\OpenWithProgids",
-      "DeckCraft.Presentation",
+      "Inanna.Presentation",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.ppsx\\OpenWithProgids",
-      "DeckCraft.Presentation",
+      "Inanna.Presentation",
       ""
     ],
     [
       "-1",
-      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\deckcraft.exe",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\inanna.exe",
       "",
       "[#DeckcraftExe]"
     ]

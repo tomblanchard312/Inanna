@@ -1,6 +1,6 @@
 # Inanna integration roadmap
 
-Status: proposed, 2026-10-30. No integrations implemented by the initial branding PR.
+Status: staged plan, updated 2026-10-30. App/installer branding and initial native Scribe integration are implemented; acceptance results and remaining limits are in [Scribe](scribe.md) and the review PR.
 
 ## 1. Establish the baseline and release identity
 
@@ -10,7 +10,7 @@ Acceptance: a reviewed baseline report identifies exact revision, checks passed,
 
 ## 2. Enki local assistance
 
-First inspect Enki's current SDK, transport, supported platforms and model lifecycle. Use its existing text/chat interface for a single outline-to-slides flow, followed by notes and text revision. Do not assume image generation exists. Keep Enki optional; editing and export must work without a runtime or model. Use explicit user initiation, bounded input/output, cancellation, timeouts and visible errors. No silent network fallback or model downloads.
+First inspect Enki's current SDK, transport, supported platforms and model lifecycle. Use its existing text/chat interface for a single outline-to-slides flow, followed by notes and text revision. The current image-capable SDK snapshot supports image and logo generation; the native Scribe panel uses that verified API. Keep Enki optional; editing and export must work without a runtime or model. Use explicit user initiation, bounded input/output, cancellation, timeouts and visible errors. No silent network fallback or model downloads.
 
 Route accepted changes through existing engine commands so they are undoable. Treat document and model text as untrusted; model output cannot authorize filesystem access or execute arbitrary MCP commands. Preview proposed edits before applying them.
 
