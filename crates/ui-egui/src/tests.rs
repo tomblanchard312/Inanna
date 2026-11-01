@@ -2339,3 +2339,26 @@ fn overdue_visible_logic_does_not_reanchor_a_later_hidden_show() {
     let _ = ctx.run_logic(&raw_at(12.0, true, false), |ctx| app.tick_hidden_show(ctx, visible_anchor + std::time::Duration::from_secs(3)));
     assert_eq!(app.show.as_ref().unwrap().state.slide, 1, "time from the full visible frame is preserved through the logic-only pass");
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+#[test]
+fn voice_panel_opens_and_reopens_from_the_top_bar_without_recording() {
+    let mut harness = egui_kittest::Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_ui_state(
+        |ui, app: &mut SlideApp| {
+            app.logic(ui.ctx());
+            app.ui(ui);
+        },
+        SlideApp::new(Session::with_new(), Services::default()),
+    );
+    harness.run_steps(3);
+    harness.get_by_label("Voice").click();
+    harness.run_steps(2);
+    assert!(harness.state().speech.open);
+    harness.get_by_label("Dictate");
+    harness.state_mut().speech.open = false;
+    harness.run_steps(1);
+    harness.get_by_label("Voice").click();
+    harness.run_steps(2);
+    assert!(harness.state().speech.open);
+    harness.get_by_label("Voice command");
+}

@@ -59,7 +59,7 @@ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
         // Right side.
         let mut right = ui.new_child(
             egui::UiBuilder::new()
-                .max_rect(Rect::from_min_max(pos2(rect.max.x - 320.0, rect.min.y), pos2(rect.max.x - 10.0, rect.max.y)))
+                .max_rect(Rect::from_min_max(pos2(rect.max.x - 400.0, rect.min.y), pos2(rect.max.x - 10.0, rect.max.y)))
                 .layout(egui::Layout::right_to_left(egui::Align::Center)),
         );
         right.spacing_mut().item_spacing.x = 6.0;
@@ -68,6 +68,8 @@ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
         }
         #[cfg(not(target_arch = "wasm32"))]
         crate::scribe::button(app, &mut right);
+        #[cfg(not(target_arch = "wasm32"))]
+        app.speech.button(&mut right, "Voice");
         let share = right.add(
             egui::Button::new(egui::RichText::new("  Present  ").color(t.accent_text).font(theme::bold(13.0)))
                 .fill(t.accent)

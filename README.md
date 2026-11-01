@@ -39,3 +39,5 @@ The visual direction is dark surfaces, blue accents, clear sidebar navigation, g
 The inherited code is licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE), at your option. Copyright (c) 2026 ArtCraft Team and the DeckCraft contributors. Required notices remain in [NOTICE](NOTICE); asset licenses and sources remain in [ATTRIBUTION.md](ATTRIBUTION.md).
 
 Inanna is an independent fork, with no claim of upstream sponsorship or endorsement. ArtCraft trademark graphics were removed from this branch; their original [terms](docs/brand/LICENSE-brand.txt) remain for provenance. The upstream commit history retains the original materials. Changes in this fork are recorded in Git and the [branding record](docs/inanna-branding.md).
+
+Voice accessibility preview: see [dictation, transcription, translation and safe voice controls](docs/VOICE.md).
