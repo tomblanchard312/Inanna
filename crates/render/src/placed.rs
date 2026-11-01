@@ -37,6 +37,10 @@ pub struct PlacedShape {
     pub is_group: bool,
     /// Slide-space bounding box.
     pub rect: Rect,
+    /// Original local-to-slide and parent transforms, for animation hit testing.
+    pub transform: Affine,
+    pub parent_transform: Affine,
+    pub local_center: kurbo::Point,
     /// The shape's own action (Insert ▸ Action), not its text hyperlinks.
     pub link: Option<Hyperlink>,
 }
@@ -116,7 +120,16 @@ fn place(out: &mut Placed, rctx: &Ctx, fields: &SlideFields, s: &Shape, parent: 
         out.links.push(PlacedLink { rect, link: link.clone(), shape: s.id, text: false });
     }
     let me = if own {
-        out.shapes.push(PlacedShape { id: s.id, parent: group, is_group: matches!(s.kind, ShapeKind::Group { .. }), rect, link: s.click.clone() });
+        out.shapes.push(PlacedShape {
+            id: s.id,
+            parent: group,
+            is_group: matches!(s.kind, ShapeKind::Group { .. }),
+            rect,
+            transform: m,
+            parent_transform: parent,
+            local_center: kurbo::Point::new(x.w / 2.0, x.h / 2.0),
+            link: s.click.clone(),
+        });
         Some(out.shapes.len() - 1)
     } else {
         None

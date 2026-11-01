@@ -11,7 +11,7 @@ use super::{
 mod clipboard;
 mod commands;
 mod control;
-mod files;
+pub(crate) mod files;
 mod frame;
 mod ime;
 mod input;
@@ -28,6 +28,11 @@ pub use keys::key_name;
 const STATUS_LINGER_MS: f64 = 6000.0;
 
 impl SlideApp {
+    /// Remove temporary PDFs created for printing.
+    pub fn cleanup_print_previews(&mut self) {
+        self.print_previews.cleanup();
+    }
+
     /// Build application UI state, taking ownership of audio output and initialising media, dialogs,
     /// synthetic input, and timing fields.
     pub fn new(session: Session, mut services: Services) -> Self {
@@ -79,6 +84,7 @@ impl SlideApp {
             integrated_titlebar: false,
             backstage: None,
             pending_urls: vec![],
+            print_previews: files::PrintPreviews::default(),
             pending_copy: None,
             capture: capture::Capture::default(),
             styled: false,

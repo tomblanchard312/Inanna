@@ -292,6 +292,7 @@ pub struct SlideApp {
     /// creating or closing a presentation leaves it.
     pub backstage: Option<backstage::Backstage>,
     pending_urls: Vec<String>,
+    print_previews: app::files::PrintPreviews,
     /// Text for the system clipboard from a Copy or Cut command, handed over on the next frame.
     pending_copy: Option<String>,
     /// Bounded screenshot completion slots for the control channel (egui 0.37 callbacks).
@@ -307,8 +308,8 @@ pub struct SlideApp {
     pub(crate) notes_buf: (u64, usize, notes::Draft),
     /// Faces borrowed from the font database for text the interface fonts can't draw (#101).
     pub ui_fonts: uifonts::UiFonts,
-    /// Thumbnail pane drag (slide index, current drop index).
-    pub(crate) thumb_drag: Option<(usize, usize)>,
+    /// Slide drag in the thumbnail pane or the Slide Sorter: the dragged slides and the drop gap.
+    pub(crate) thumb_drag: Option<thumbs::SlideDrag>,
     /// Selection pane: folded groups, renaming, drag and drop.
     pub selpane: selpane::State,
     /// Arrange ▸ Align: Align to Slide (`true`) or Align Selected Objects, ticked for that selection.
@@ -458,6 +459,8 @@ mod ime_tests;
 mod last_color_tests;
 #[cfg(test)]
 mod presenter_tests;
+#[cfg(test)]
+mod reflection_pane_tests;
 #[cfg(test)]
 mod replacefonts_tests;
 #[cfg(test)]

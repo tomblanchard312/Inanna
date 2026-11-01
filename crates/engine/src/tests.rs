@@ -237,6 +237,132 @@ fn pasted_shapes_get_the_next_automatic_name() {
     assert_eq!(names(&s).last().unwrap(), "Hero");
 }
 
+/// PowerPoint 16.0 (Windows): on "Rectangle 1, Oval 2, TextBox 3, Hero" Duplicate gives
+/// "Rectangle 5" and then "Rectangle 6", "TextBox 7"; the copy of "Hero" (and of its copy) is
+/// "Hero". Never "Hero copy".
+#[test]
+fn duplicate_gives_the_next_automatic_name_and_keeps_a_chosen_one() {
+    let mut s = session();
+    let names = |s: &Session| s.doc().unwrap().current_slide().unwrap().shapes.iter().map(|x| x.name.clone()).collect::<Vec<_>>();
+    let add = |s: &mut Session, cmd: &str, p: serde_json::Value| {
+        s.execute(cmd, &p).unwrap();
+        s.doc().unwrap().selection.shapes[0].0
+    };
+    let rect = add(&mut s, "shape.insert", json!({"preset": "rect", "rect": [10, 10, 50, 50]}));
+    let tb = add(&mut s, "shape.insert", json!({"preset": "rect", "rect": [100, 10, 50, 50]}));
+    s.execute("shape.rename", &json!({"id": tb, "name": "Hero"})).unwrap();
+    let n = names(&s).len();
+    let auto = names(&s)[n - 2].clone();
+    let (base, _) = auto.rsplit_once(' ').unwrap();
+
+    s.execute("edit.duplicate", &json!({"ids": [rect]})).unwrap();
+    s.execute("edit.duplicate", &json!({"ids": [rect]})).unwrap();
+    let all = names(&s);
+    assert_eq!(all[n], format!("{base} {}", n + 1), "{all:?}");
+    assert_eq!(all[n + 1], format!("{base} {}", n + 2), "{all:?}");
+
+    s.execute("edit.duplicate", &json!({"ids": [tb]})).unwrap();
+    let copy = s.doc().unwrap().selection.shapes[0].0;
+    s.execute("edit.duplicate", &json!({"ids": [copy]})).unwrap();
+    let all = names(&s);
+    assert_eq!(&all[n + 2..], ["Hero", "Hero"], "{all:?}");
+}
+
+/// Two shapes sharing a chosen name are still two shapes: the next number follows the count.
+#[test]
+fn duplicate_numbers_from_the_shape_count_when_names_repeat() {
+    let mut s = session();
+    s.execute("shape.insert", &json!({"preset": "rect", "rect": [10, 10, 50, 50]})).unwrap();
+    let rect = s.doc().unwrap().selection.shapes[0].0;
+    s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 10, 50, 50]})).unwrap();
+    let hero = s.doc().unwrap().selection.shapes[0].0;
+    s.execute("shape.rename", &json!({"id": hero, "name": "Hero"})).unwrap();
+    s.execute("edit.duplicate", &json!({"ids": [hero]})).unwrap();
+    let before = s.doc().unwrap().current_slide().unwrap().shapes.len();
+    s.execute("edit.duplicate", &json!({"ids": [rect]})).unwrap();
+    let doc = s.doc().unwrap();
+    let shapes = &doc.current_slide().unwrap().shapes;
+    let source = shapes.iter().find(|x| x.id.0 == rect).unwrap();
+    let base = source.name.rsplit_once(' ').unwrap().0;
+    let names: Vec<_> = shapes.iter().map(|x| x.name.as_str()).collect();
+    assert_eq!(shapes[before].name, format!("{base} {}", before + 1), "{names:?}");
+}
+
+/// The next automatic name looks at the names inside groups too.
+#[test]
+fn duplicating_a_group_does_not_repeat_the_names_of_its_members() {
+    let mut s = session();
+    let mut ids = vec![];
+    for x in [10, 70, 130, 190] {
+        s.execute("shape.insert", &json!({"preset": "rect", "rect": [x, 10, 50, 50]})).unwrap();
+        ids.push(s.doc().unwrap().selection.shapes[0].0);
+    }
+    s.execute("arrange.group", &json!({"ids": [ids[2], ids[3]]})).unwrap();
+    let group = s.doc().unwrap().selection.shapes[0].0;
+    // Fewer top-level shapes than names in use: the next number is one a member already has.
+    s.execute("edit.delete", &json!({"ids": [ids[0], ids[1]]})).unwrap();
+    s.execute("edit.duplicate", &json!({"ids": [group]})).unwrap();
+    let doc = s.doc().unwrap();
+    let mut all = vec![];
+    deckcraft_model::walk(&doc.current_slide().unwrap().shapes, &mut |sh, _| all.push(sh.name.clone()));
+    let mut unique = all.clone();
+    unique.sort();
+    unique.dedup();
+    assert_eq!(unique.len(), all.len(), "{all:?}");
+}
+
+/// A shape inserted or pasted after a group was duplicated takes none of its members' names.
+#[test]
+fn inserting_after_duplicating_a_group_does_not_repeat_a_member_name() {
+    let mut s = session();
+    let mut ids = vec![];
+    for x in [10, 70] {
+        s.execute("shape.insert", &json!({"preset": "rect", "rect": [x, 10, 50, 50]})).unwrap();
+        ids.push(s.doc().unwrap().selection.shapes[0].0);
+    }
+    s.execute("arrange.group", &json!({"ids": ids})).unwrap();
+    let group = s.doc().unwrap().selection.shapes[0].0;
+    s.execute("edit.duplicate", &json!({"ids": [group]})).unwrap();
+    // Fewer top-level shapes than shapes: counting only the top level reaches a member's number.
+    for x in [130, 190, 250] {
+        s.execute("shape.insert", &json!({"preset": "rect", "rect": [x, 10, 50, 50]})).unwrap();
+    }
+    s.execute("edit.copy", &json!({})).unwrap();
+    s.execute("edit.paste", &json!({})).unwrap();
+    let doc = s.doc().unwrap();
+    let mut all = vec![];
+    deckcraft_model::walk(&doc.current_slide().unwrap().shapes, &mut |sh, _| all.push(sh.name.clone()));
+    let mut unique = all.clone();
+    unique.sort();
+    unique.dedup();
+    assert_eq!(unique.len(), all.len(), "{all:?}");
+}
+
+/// Group members are renamed like any other copied shape.
+#[test]
+fn duplicating_a_group_renames_its_automatic_children() {
+    let mut s = session();
+    let mut ids = vec![];
+    for x in [10, 100] {
+        s.execute("shape.insert", &json!({"preset": "rect", "rect": [x, 10, 50, 50]})).unwrap();
+        ids.push(s.doc().unwrap().selection.shapes[0].0);
+    }
+    s.execute("arrange.group", &json!({"ids": ids})).unwrap();
+    let group = s.doc().unwrap().selection.shapes[0].0;
+    s.execute("edit.duplicate", &json!({"ids": [group]})).unwrap();
+    let doc = s.doc().unwrap();
+    let shapes = &doc.current_slide().unwrap().shapes;
+    let (orig, copy) = (&shapes[shapes.len() - 2], &shapes[shapes.len() - 1]);
+    assert!(orig.is_group() && copy.is_group());
+    assert_ne!(orig.name, copy.name);
+    assert!(copy.name.starts_with("Group "), "{}", copy.name);
+    let all: Vec<_> = orig.children().iter().chain(copy.children()).map(|c| c.name.as_str()).collect();
+    let mut unique = all.clone();
+    unique.sort();
+    unique.dedup();
+    assert_eq!(unique.len(), all.len(), "{all:?}");
+}
+
 #[test]
 fn pasting_after_a_deleted_shape_does_not_repeat_a_name() {
     let mut s = session();
@@ -1426,6 +1552,14 @@ fn opening_a_file_lists_the_fonts_it_uses_that_are_missing() {
 }
 
 #[test]
+fn a_macos_hidden_system_font_is_not_reported_missing() {
+    let mut s = Session::with_new();
+    let r = s.execute("file.openBytes", &json!({"name": "a.pptx", "data": deck_in_font(".SF NS")})).unwrap();
+    assert_eq!(r["missingFonts"], json!([]));
+    assert!(s.doc().unwrap().missing_fonts.is_empty());
+}
+
+#[test]
 fn an_embedded_face_is_used_when_the_machine_lacks_it() {
     let mut p = deckcraft_model::Presentation::default();
     let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
@@ -2320,6 +2454,15 @@ fn shape_effects_props_adjust_shadow_glow_and_reflection() {
     let f = fx(&s);
     assert!(f.outer_shadow.is_none());
     assert_eq!(f.inner_shadow.unwrap().blur, 3.0);
+    // Size scales both axes (PowerPoint's 0–200%); out-of-range values clamp.
+    s.execute("shape.effects", &json!({"shadow": "inner"})).unwrap();
+    s.execute("shape.effects", &json!({"shadowProps": {"size": 1.5}})).unwrap();
+    let sw = fx(&s).inner_shadow.unwrap();
+    assert_eq!((sw.sx, sw.sy), (1.5, 1.5));
+    s.execute("shape.effects", &json!({"shadowProps": {"size": 9}})).unwrap();
+    assert_eq!(fx(&s).inner_shadow.unwrap().sx, 2.0);
+    s.execute("shape.effects", &json!({"shadowProps": {"size": 0}})).unwrap();
+    assert_eq!(fx(&s).inner_shadow.unwrap().sy, 0.01);
     // Glow: size, colour, transparency; size 0 removes it.
     s.execute("shape.effects", &json!({"glowProps": {"radius": 12, "transparency": 0.5}})).unwrap();
     let g = fx(&s).glow.unwrap();
@@ -3055,6 +3198,15 @@ fn motion_path_presets_have_paths_ids_and_round_trip() {
 fn numbering_takes_color_and_size() {
     let mut s = Session::with_new();
     s.execute("insert.textBox", &json!({"rect": [10, 10, 300, 100], "text": "One\nTwo"})).unwrap();
+    {
+        let id = s.doc().unwrap().selection.shapes[0];
+        let d = std::sync::Arc::make_mut(&mut s.doc_mut().unwrap().doc);
+        let shape = deckcraft_model::find_shape_mut(&mut std::sync::Arc::make_mut(&mut d.slides[0]).shapes, id).unwrap();
+        let props = &mut shape.text.as_mut().unwrap().paragraphs[0].props;
+        props.bullet_font_follow_text = Some(true);
+        props.bullet_color_follow_text = Some(true);
+        props.bullet_size_follow_text = Some(true);
+    }
     s.execute("format.numbering", &json!({"on": true, "scheme": "romanUcPeriod", "start": 3, "color": "accent2", "size": 150})).unwrap();
     let para = |s: &Session| {
         let st = s.doc().unwrap();
@@ -3064,9 +3216,13 @@ fn numbering_takes_color_and_size() {
     let pp = para(&s);
     assert!(matches!(&pp.bullet, Some(deckcraft_model::text::Bullet::AutoNum { scheme, start_at: 3 }) if scheme == "romanUcPeriod"));
     assert_eq!(pp.bullet_size, Some(1.5));
+    assert_eq!(pp.bullet_font_follow_text, Some(true));
+    assert_eq!(pp.bullet_color_follow_text, None);
+    assert_eq!(pp.bullet_size_follow_text, None);
     assert_eq!(pp.bullet_color, Some(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent2)));
     s.execute("format.bullets", &json!({"on": true, "char": "★", "size": 9000})).unwrap();
     assert_eq!(para(&s).bullet_size, Some(4.0));
+    assert_eq!(para(&s).bullet_font_follow_text, None);
 }
 
 #[test]
@@ -4421,6 +4577,16 @@ fn autoformat_starts_bulleted_and_numbered_lists_as_you_type() {
     assert_eq!(s.execute("text.autocorrect", &json!({})).unwrap()["lists"], true);
     s.execute("text.autocorrect", &json!({"lists": false})).unwrap();
     assert_eq!(typed(&mut s, "* x"), ("* x".to_string(), none));
+    // List AutoFormat is independent of the Replace text as you type setting.
+    s.execute("text.autocorrect", &json!({"on": false, "lists": true})).unwrap();
+    assert_eq!(typed(&mut s, "*"), ("*".to_string(), Some(Bullet::None)));
+    s.execute("text.insert", &json!({"text": " "})).unwrap();
+    assert_eq!(para(&s), (String::new(), ch("•")));
+    s.execute("text.delete", &json!({"dir": "backward"})).unwrap();
+    assert_eq!(para(&s), ("* ".to_string(), Some(Bullet::None)));
+    // Word replacements still run while list formatting is disabled.
+    s.execute("text.autocorrect", &json!({"on": true, "lists": false})).unwrap();
+    assert_eq!(typed(&mut s, "teh "), ("The ".to_string(), Some(Bullet::None)));
 }
 
 #[test]
@@ -5802,4 +5968,127 @@ fn invalid_slide_index_never_falls_back_to_the_selection_in_export_commands() {
         assert!(matches!(r, Err(crate::EngineError::BadParams { .. })), "colorAt slide {slide} gave {r:?}");
     }
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn highlight_with_an_invalid_colour_is_rejected_and_keeps_the_highlight() {
+    let mut s = session();
+    let title = s.doc().unwrap().current_slide().unwrap().shapes[0].id.0;
+    s.execute("text.edit", &json!({"id": title})).unwrap();
+    s.execute("text.insert", &json!({"text": "ARCH"})).unwrap();
+    s.execute("text.selectAll", &json!({})).unwrap();
+    s.execute("format.highlight", &json!({"color": "yellow"})).unwrap();
+    let has_highlight = |s: &mut Session| {
+        let t = s.doc().unwrap().shape(ShapeId(title)).unwrap().text.clone().unwrap();
+        t.paragraphs.iter().flat_map(|p| p.runs.iter()).any(|r| r.props.highlight.is_some())
+    };
+    assert!(has_highlight(&mut s));
+    let r = s.execute("format.highlight", &json!({"color": "notacolour"}));
+    assert!(matches!(r, Err(crate::EngineError::BadParams { .. })), "{r:?}");
+    assert!(has_highlight(&mut s), "an invalid colour must not clear the highlight");
+    s.execute("format.highlight", &json!({})).unwrap();
+    assert!(!has_highlight(&mut s), "an absent colour clears the highlight");
+}
+
+#[test]
+fn master_layout_placeholder_format_inherits() {
+    let mut s = Session::new();
+    sample::open_sample(&mut s).unwrap();
+    let title_of = |shapes: &[model::Shape]| shapes.iter().find(|sh| sh.ph.as_ref().is_some_and(|p| p.kind.is_title())).map(|sh| sh.id.0).unwrap();
+    let existing = title_of(&s.doc().unwrap().doc.slides[0].shapes);
+    s.execute("view.slideMaster", &json!({"master": 0, "layout": 0})).unwrap();
+    let layout_title = title_of(&s.doc().unwrap().doc.masters[0].layouts[0].shapes);
+    s.execute("edit.select", &json!({"ids": [layout_title]})).unwrap();
+    s.execute("format.font", &json!({"family": "Montserrat"})).unwrap();
+    s.execute("format.align", &json!({"align": "right"})).unwrap();
+    let st = s.execute("format.state", &json!({})).unwrap();
+    assert_eq!(st["fontRef"], "Montserrat", "layout placeholder: {st}");
+    s.execute("view.closeMaster", &json!({})).unwrap();
+    s.execute("slide.new", &json!({"layout": "title"})).unwrap();
+    let slide = s.doc().unwrap().selection.slide;
+    let fresh = title_of(&s.doc().unwrap().doc.slides[slide].shapes);
+    for (index, id) in [(slide, fresh), (0, existing)] {
+        s.execute("slide.go", &json!({"index": index})).unwrap();
+        s.execute("edit.select", &json!({"ids": [id]})).unwrap();
+        let st = s.execute("format.state", &json!({})).unwrap();
+        assert_eq!(st["fontRef"], "Montserrat", "slide placeholder {id}: {st}");
+        assert_eq!(st["align"], "r", "slide placeholder {id}: {st}");
+    }
+}
+
+#[test]
+fn master_body_placeholder_format_keeps_per_level_formatting() {
+    let mut s = Session::new();
+    sample::open_sample(&mut s).unwrap();
+    s.execute("view.slideMaster", &json!({"master": 0})).unwrap();
+    let body_idx =
+        s.doc().unwrap().doc.masters[0].shapes.iter().position(|sh| sh.ph.as_ref().is_some_and(|p| p.kind == model::PhType::Body)).unwrap();
+    let id = {
+        let st = s.doc_mut().unwrap();
+        let sh = &mut std::sync::Arc::make_mut(&mut std::sync::Arc::make_mut(&mut st.doc).masters[0]).shapes[body_idx];
+        let mut body = model::TextBody::from_text("Alpha\nBeta");
+        body.paragraphs[1].level = 1;
+        for (l, size) in [(0u8, 32.0), (1, 28.0)] {
+            let mut lvl = model::text::LevelStyle::default();
+            lvl.run.size = Some(size);
+            body.list_style.set(l, lvl);
+        }
+        sh.text = Some(body);
+        sh.id
+    };
+    let level =
+        |s: &Session, l: u8| s.doc().unwrap().doc.masters[0].shapes[body_idx].text.as_ref().unwrap().list_style.level(l).cloned().unwrap_or_default();
+    // Bolding the level-2 paragraph reaches level 2 only.
+    s.doc_mut().unwrap().selection.shapes = vec![id];
+    s.doc_mut().unwrap().selection.text = Some(TextSel { shape: id, anchor: (1, 0), caret: (1, 4), cell: None, notes: false, line_end: None });
+    s.execute("format.bold", &json!({"on": true})).unwrap();
+    assert_eq!(level(&s, 1).run.bold, Some(true));
+    for l in [0, 2, 3, 8] {
+        assert_eq!(level(&s, l).run.bold, None, "level {}", l + 1);
+    }
+    // Grow and shrink step each level from its own size.
+    s.doc_mut().unwrap().selection.text = None;
+    // The text itself: a run's explicit size, else its level's effective size.
+    let shown = |s: &Session| -> Vec<Option<f64>> {
+        let st = s.doc().unwrap();
+        let ctx = crate::cmd::text::ctx_for(&st.doc, &st.selection).unwrap();
+        let sh = &st.doc.masters[0].shapes[body_idx];
+        let body = sh.text.as_ref().unwrap();
+        body.paragraphs.iter().map(|p| p.runs[0].props.size.or(deckcraft_model::resolve::level_style(&ctx, sh, p.level).run.size)).collect()
+    };
+    s.execute("format.grow", &json!({})).unwrap();
+    assert_eq!((level(&s, 0).run.size, level(&s, 1).run.size), (Some(36.0), Some(32.0)));
+    assert_eq!(shown(&s), vec![Some(36.0), Some(32.0)]);
+    s.execute("format.shrink", &json!({})).unwrap();
+    s.execute("format.shrink", &json!({})).unwrap();
+    assert_eq!((level(&s, 0).run.size, level(&s, 1).run.size), (Some(28.0), Some(24.0)));
+    assert_eq!(shown(&s), vec![Some(28.0), Some(24.0)]);
+}
+
+#[test]
+fn master_run_formatting_excludes_a_zero_length_terminal_paragraph() {
+    let mut s = Session::new();
+    sample::open_sample(&mut s).unwrap();
+    s.execute("view.slideMaster", &json!({"master": 0})).unwrap();
+    let body_idx =
+        s.doc().unwrap().doc.masters[0].shapes.iter().position(|sh| sh.ph.as_ref().is_some_and(|p| p.kind == model::PhType::Body)).unwrap();
+    let id = {
+        let st = s.doc_mut().unwrap();
+        let sh = &mut std::sync::Arc::make_mut(&mut std::sync::Arc::make_mut(&mut st.doc).masters[0]).shapes[body_idx];
+        let mut body = model::TextBody::from_text("Alpha\nBeta");
+        body.paragraphs[1].level = 1;
+        body.paragraphs[0].def_props.size = Some(40.0);
+        body.list_style.set(0, model::text::LevelStyle { run: model::RunProps { size: Some(32.0), ..Default::default() }, ..Default::default() });
+        sh.text = Some(body);
+        sh.id
+    };
+    s.doc_mut().unwrap().selection.shapes = vec![id];
+    s.doc_mut().unwrap().selection.text = Some(TextSel { shape: id, anchor: (0, 0), caret: (1, 0), cell: None, notes: false, line_end: None });
+    s.execute("format.bold", &json!({"on":true})).unwrap();
+    s.execute("format.grow", &json!({})).unwrap();
+    let body = s.doc().unwrap().doc.masters[0].shapes[body_idx].text.as_ref().unwrap();
+    assert_eq!(body.paragraphs[0].runs[0].props.size, Some(44.0));
+    assert_eq!(body.list_style.level(0).unwrap().run.size, Some(36.0));
+    assert!(body.list_style.level(1).is_none_or(|l| l.run.bold.is_none() && l.run.size.is_none()));
+    assert!(body.paragraphs[1].runs[0].props.bold.is_none());
 }

@@ -978,6 +978,7 @@ fn a_linear_gradient_ramps_like_powerpoint() {
             stops: vec![stop(0.0, deckcraft_color::Rgba::rgb(0, 0, 0)), stop(1.0, deckcraft_color::Rgba::rgb(255, 255, 255))],
             shape: GradientShape::Linear { angle: 0.0, scaled: false },
             rotate_with_shape: true,
+            flip: None,
         })),
         line: Some(deckcraft_model::style::Line { fill: Some(Fill::None), ..Default::default() }),
         ..Default::default()
@@ -1003,6 +1004,7 @@ fn a_gradient_with_a_stop_off_the_end_stays_linear() {
             stops: vec![stop(0.2, deckcraft_color::Rgba::rgb(0, 0, 0)), stop(1.0, deckcraft_color::Rgba::rgb(255, 255, 255))],
             shape: GradientShape::Linear { angle: 0.0, scaled: false },
             rotate_with_shape: true,
+            flip: None,
         })),
         line: Some(deckcraft_model::style::Line { fill: Some(Fill::None), ..Default::default() }),
         ..Default::default()
@@ -1044,6 +1046,7 @@ fn a_shape_filled_with_the_background_shows_the_slide_background() {
             stops: vec![stop(0.0, 0), stop(0.5, 0), stop(1.0, 200)],
             shape: GradientShape::Linear { angle: 0.0, scaled: false },
             rotate_with_shape: true,
+            flip: None,
         }),
     });
     let img = render_slide(&p, 0, &RenderOpts { scale: 1.0, ..Default::default() });
@@ -1145,6 +1148,7 @@ fn a_text_gradient_starts_over_on_every_line() {
             stops: vec![stop(0.0, 0), stop(1.0, 255)],
             shape: GradientShape::Linear { angle: 90.0, scaled: false },
             rotate_with_shape: true,
+            flip: None,
         }));
     }
     sh.text = Some(t);
@@ -1306,6 +1310,7 @@ fn rect_path_gradients_draw_x_shaped_contours() {
             stops: vec![stop(0.0, 0), stop(0.5, 128), stop(1.0, 255)],
             shape: GradientShape::Path { path: "rect".into(), focus: [0.5, 0.5, 0.5, 0.5] },
             rotate_with_shape: true,
+            flip: None,
         })),
         line: Some(deckcraft_model::style::Line { fill: Some(Fill::None), ..Default::default() }),
         ..Default::default()
@@ -3028,4 +3033,90 @@ fn a_shape_whose_outline_is_not_finite_is_not_drawable() {
     let mut quad = geo(&[(0.0, 0.0), (1.0, 1.0)]);
     quad.paths[0].path = path;
     assert!(!crate::geometry::drawable(&quad, m, 100.0, 50.0));
+}
+
+#[test]
+fn gradient_tiles_flip_alternating_fill_and_line_tiles() {
+    use deckcraft_model::style::{Gradient, GradientFlip, GradientShape, GradientStop, Line};
+    for (flip, angle, vertical) in [(GradientFlip::X, 0.0, false), (GradientFlip::Y, 90.0, true), (GradientFlip::Xy, 0.0, false)] {
+        for outline in [false, true] {
+            let gradient = Fill::Gradient(Gradient {
+                stops: vec![
+                    GradientStop { pos: 0.0, color: ColorRef::rgb(Rgba::BLACK) },
+                    GradientStop { pos: 1.0, color: ColorRef::rgb(Rgba::WHITE) },
+                ],
+                shape: GradientShape::Linear { angle, scaled: false },
+                tile: if vertical { [0.0, 0.0, 0.0, 0.5] } else { [0.0, 0.0, 0.5, 0.0] },
+                flip: Some(flip),
+                rotate_with_shape: true,
+            });
+            let sh = Shape {
+                id: ShapeId(1700),
+                xfrm: Some(Xfrm::new(100.0, 100.0, 200.0, 200.0)),
+                fill: Some(if outline { Fill::None } else { gradient.clone() }),
+                line: Some(Line { fill: Some(if outline { gradient } else { Fill::None }), width: Some(20.0), ..Default::default() }),
+                ..Default::default()
+            };
+            let img = render_slide(&deck_with(vec![sh]), 0, &RenderOpts { scale: 1.0, ..Default::default() });
+            let (a, b) = if vertical { ((100, 120), (100, 280)) } else { ((120, 100), (280, 100)) };
+            let (a, b) = (img.pixel(a.0, a.1)[0] as i32, img.pixel(b.0, b.1)[0] as i32);
+            assert!((a - b).abs() < 12, "{flip:?}, outline={outline}: {a} vs {b}");
+            assert!(a < 160, "a flipped tile must not be an empty white region");
+        }
+    }
+}
+
+#[test]
+fn inside_outline_stays_inside_and_miter_limit_changes_corners() {
+    use deckcraft_model::style::{Line, LineAlign, LineJoin};
+    let shape = |align, limit| Shape {
+        id: ShapeId(1701),
+        xfrm: Some(Xfrm::new(100.0, 100.0, 100.0, 100.0)),
+        fill: Some(Fill::None),
+        line: Some(Line {
+            fill: Some(Fill::solid(ColorRef::rgb(Rgba::BLACK))),
+            width: Some(20.0),
+            align: Some(align),
+            join: Some(LineJoin::Miter),
+            miter_limit: limit,
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+    let opts = RenderOpts { scale: 1.0, ..Default::default() };
+    let inside = render_slide(&deck_with(vec![shape(LineAlign::Inside, None)]), 0, &opts);
+    let centered = render_slide(&deck_with(vec![shape(LineAlign::Center, None)]), 0, &opts);
+    assert_eq!(inside.pixel(95, 150), [255; 4]);
+    assert!(centered.pixel(95, 150)[0] < 50);
+    assert!(inside.pixel(115, 150)[0] < 50);
+    let sharp = render_slide(&deck_with(vec![shape(LineAlign::Center, Some(800_000))]), 0, &opts);
+    assert!(sharp.pixel(92, 92)[0] < 50);
+    for limit in [0, 50_000, 100_000] {
+        let beveled = render_slide(&deck_with(vec![shape(LineAlign::Center, Some(limit))]), 0, &opts);
+        assert!(beveled.pixel(92, 92)[0] > 200, "miter limit {limit}");
+    }
+}
+
+#[test]
+fn gradient_flip_does_not_reverse_the_primary_tile_or_allocate_unbounded_tiles() {
+    use deckcraft_model::style::{Gradient, GradientFlip, GradientShape};
+    let bounds = Rect::new(0.0, 0.0, 100.0, 100.0);
+    let mut gradient = Gradient {
+        stops: vec![],
+        shape: GradientShape::Linear { angle: 45.0, scaled: false },
+        flip: Some(GradientFlip::Xy),
+        rotate_with_shape: true,
+        tile: [0.0; 4],
+    };
+    assert!(crate::paint::gradient_tiles(&gradient, bounds).is_none());
+    gradient.tile = [0.0, 0.0, 0.5, 0.5];
+    let tiles = crate::paint::gradient_tiles(&gradient, bounds).unwrap();
+    assert_eq!(tiles.len(), 4);
+    let angle = |i: usize| if let GradientShape::Linear { angle, .. } = tiles[i].1.shape { angle } else { panic!("linear") };
+    assert_eq!(angle(0), 45.0);
+    assert_eq!(angle(1), 135.0);
+    assert_eq!(angle(2), -45.0);
+    assert_eq!(angle(3), -135.0);
+    gradient.tile = [0.0, 0.0, 0.999999, 0.999999];
+    assert!(crate::paint::gradient_tiles(&gradient, bounds).is_none());
 }
