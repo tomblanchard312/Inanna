@@ -15,7 +15,50 @@ pub(crate) fn stroke(
     lw: f64,
     alpha: f64,
 ) {
-    use deckcraft_model::style::{LineCap, LineJoin};
+    stroke_painted(ctx, rctx, line, ph, path, extent, m, lw, alpha, None);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn stroke_painted(
+    ctx: &mut RenderContext,
+    rctx: &Ctx,
+    line: &Line,
+    ph: Option<Rgba>,
+    path: &BezPath,
+    extent: Option<&BezPath>,
+    m: Affine,
+    lw: f64,
+    alpha: f64,
+    paint_override: Option<peniko::Gradient>,
+) {
+    if paint_override.is_none()
+        && let Some(Fill::Gradient(g)) = &line.fill
+        && !g.stops.is_empty()
+    {
+        let bounds = extent.unwrap_or(path).bounding_box().inflate(lw / 2.0, lw / 2.0);
+        if let Some(tiles) = paint::gradient_tiles(g, bounds) {
+            for (tile, gradient) in tiles {
+                ctx.set_transform(m);
+                ctx.push_clip_layer(&tile.to_path(0.1));
+                let stops = gradient.stops.iter().map(|s| (s.pos, rctx.color(&s.color, ph))).collect();
+                let paint = paint::gradient(&gradient.shape, stops, tile, alpha);
+                stroke_painted(ctx, rctx, line, ph, path, extent, m, lw, alpha, Some(paint));
+                ctx.pop_layer();
+            }
+            return;
+        }
+    }
+    use deckcraft_model::style::{LineAlign, LineCap, LineJoin};
+    let closed =
+        path.elements().split(|e| matches!(e, PathEl::MoveTo(_))).all(|part| part.is_empty() || matches!(part.last(), Some(PathEl::ClosePath)));
+    if line.align == Some(LineAlign::Inside) && closed && !path.is_empty() {
+        ctx.set_transform(m);
+        ctx.push_clip_layer(path);
+        let centered = Line { align: Some(LineAlign::Center), ..line.clone() };
+        stroke_painted(ctx, rctx, &centered, ph, path, extent, m, lw * 2.0, alpha, paint_override);
+        ctx.pop_layer();
+        return;
+    }
     let cap = match line.cap.unwrap_or_default() {
         LineCap::Flat => kurbo::Cap::Butt,
         LineCap::Round => kurbo::Cap::Round,
@@ -30,7 +73,10 @@ pub(crate) fn stroke(
     let min_w = 0.5 / scale_of(m).max(1e-6);
     let sw = lw.max(min_w);
     // PowerPoint's default miter limit is 8 widths (`a:miter lim="800000"`).
-    let mut sk = kurbo::Stroke::new(sw).with_caps(cap).with_join(join).with_miter_limit(8.0);
+    let mut sk = kurbo::Stroke::new(sw)
+        .with_caps(cap)
+        .with_join(join)
+        .with_miter_limit(line.miter_limit.map(|v| (f64::from(v) / 100_000.0).max(1.0)).unwrap_or(8.0));
     // Square caps on a dashed line square off only the line's own two ends (where a dash is
     // drawn): each dash itself ends flat, as PowerPoint draws them.
     let mut square_ends = None;
@@ -47,12 +93,16 @@ pub(crate) fn stroke(
         }
     }
     ctx.set_transform(m);
-    match &line.fill {
-        Some(Fill::Solid { color: c }) => {
-            ctx.set_paint(color(rctx.color(c, ph), alpha));
+    if let Some(paint) = paint_override {
+        ctx.set_paint(paint);
+    } else {
+        match &line.fill {
+            Some(Fill::Solid { color: c }) => {
+                ctx.set_paint(color(rctx.color(c, ph), alpha));
+            }
+            Some(Fill::Gradient(g)) if !g.stops.is_empty() => ctx.set_paint(line_gradient(rctx, g, ph, extent.unwrap_or(path), lw, alpha)),
+            _ => ctx.set_paint(color(Rgba::BLACK, alpha)),
         }
-        Some(Fill::Gradient(g)) if !g.stops.is_empty() => ctx.set_paint(line_gradient(rctx, g, ph, extent.unwrap_or(path), lw, alpha)),
-        _ => ctx.set_paint(color(Rgba::BLACK, alpha)),
     }
     // Compound lines: each band stroked along the path moved to its place across the width.
     let compound = line.compound.unwrap_or_default();

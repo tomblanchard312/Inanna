@@ -1,5 +1,6 @@
 use super::render::fit;
-use super::{Click, HitShape, Hyperlink, Presentation, Rect, ShapeId, Show, SlideApp, Ui, pos2, vec2};
+use super::{Click, HitShape, Hyperlink, PlacedShape, Presentation, Rect, ShapeId, Show, SlideApp, Ui, pos2, vec2};
+use deckcraft_anim::AnimState;
 
 /// The media-host voice for slide transition sounds (no shape has this id).
 pub(crate) const TRANSITION_SOUND: ShapeId = ShapeId(u32::MAX);
@@ -152,6 +153,25 @@ pub(super) struct Under {
     pub(super) pick: Option<Pick>,
 }
 
+/// Convert a slide-space point back into a shape's own coordinates, undoing its animation.
+fn hit_point(point: (f64, f64), shapes: &[PlacedShape], states: &[AnimState], index: usize) -> Option<(f64, f64)> {
+    let shape = shapes.get(index)?;
+    let state = *states.get(index)?;
+    if state.scale_x.abs() <= f64::EPSILON || state.scale_y.abs() <= f64::EPSILON || shape.transform.determinant().abs() <= 1e-12 {
+        return None;
+    }
+    let offset =
+        shape.parent_transform * deckcraft_geom::Point::new(state.offset_x, state.offset_y) - shape.parent_transform * deckcraft_geom::Point::ZERO;
+    let local = shape.transform.inverse() * (deckcraft_geom::Point::new(point.0, point.1) - offset);
+    let c = shape.local_center;
+    let animation = deckcraft_geom::Affine::translate(c.to_vec2())
+        * deckcraft_geom::Affine::rotate(state.rotate.to_radians())
+        * deckcraft_geom::Affine::scale_non_uniform(state.scale_x, state.scale_y)
+        * deckcraft_geom::Affine::translate(-c.to_vec2());
+    let original = shape.transform * (animation.inverse() * local);
+    Some((original.x, original.y))
+}
+
 impl Under {
     fn visible(&self, id: ShapeId) -> bool {
         self.shapes.iter().zip(&self.visible).find(|(h, _)| h.id == id).is_none_or(|(_, v)| *v)
@@ -175,31 +195,29 @@ pub(super) fn shapes_under_pointer(ctx: &egui::Context, ui: &Ui, show: &mut Show
     }
     show.timeline(doc);
     let (Some((_, tl)), Some((_, links, shapes))) = (&show.timeline, &show.links) else { return None };
-    let inside = |x0: f64, y0: f64, x1: f64, y1: f64| x0 <= x && x <= x1 && y0 <= y && y <= y1;
-    let hits: Vec<HitShape> = shapes
-        .iter()
-        .map(|s| HitShape {
-            id: s.id,
-            parent: s.parent,
-            is_group: s.is_group,
-            link: s.link.as_ref().map(|l| l.action.clone()),
-            under_pointer: inside(s.rect.x0, s.rect.y0, s.rect.x1, s.rect.y1),
-        })
-        .collect();
     let (step, plays, stamps) = (show.state.step, show.state.trigger_plays(), show.state.trigger_stamps());
     let t = if show.state.playing { now - show.step_start } else { 0.0 };
-    let visible: Vec<bool> = shapes
+    let states: Vec<AnimState> = shapes.iter().map(|s| tl.state_ordered(s.id, None, step, t, &plays, &stamps)).collect();
+    let point_for = |i: usize| hit_point((x, y), shapes, &states, i);
+    let hits: Vec<HitShape> = shapes
         .iter()
-        .map(|s| {
-            let a = tl.state_ordered(s.id, None, step, t, &plays, &stamps);
-            a.visible && a.opacity > 0.0
+        .enumerate()
+        .map(|(i, s)| {
+            let under_pointer = point_for(i).is_some_and(|(x, y)| s.rect.x0 <= x && x <= s.rect.x1 && s.rect.y0 <= y && y <= s.rect.y1);
+            HitShape { id: s.id, parent: s.parent, is_group: s.is_group, link: s.link.as_ref().map(|l| l.action.clone()), under_pointer }
         })
         .collect();
+    let visible: Vec<bool> = states.iter().map(|a| a.visible && a.opacity > 0.0).collect();
     let mut under = Under { shapes: hits, visible, pick: None };
     let shown = |id: ShapeId| under.visible(id);
     // A hyperlink in text applies when its shape is the one on top.
     let top = show.state.top(doc, tl, &under.shapes, &shown);
-    let text = links.iter().rev().filter(|l| l.text && inside(l.rect.x0, l.rect.y0, l.rect.x1, l.rect.y1)).find(|l| {
+    let text = links.iter().rev().filter(|l| l.text).find(|l| {
+        let Some(i) = shapes.iter().position(|s| s.id == l.shape) else { return false };
+        let Some((x, y)) = point_for(i) else { return false };
+        if !(l.rect.x0 <= x && x <= l.rect.x1 && l.rect.y0 <= y && y <= l.rect.y1) {
+            return false;
+        }
         let mut at = top;
         (0..=under.shapes.len()).any(|_| match at.and_then(|k| under.shapes.get(k)) {
             Some(h) if h.id == l.shape => true,
@@ -251,4 +269,69 @@ pub(super) fn gif_hit(ctx: &egui::Context, ui: &Ui, show: &Show, doc_uid: u64, d
     let k = srect.width() / doc.slide_size.width.max(1.0) as f32;
     let gifs = app.media.gifs(doc_uid, doc, show.state.slide, ctx.input(|i| i.time), &app.session.gif_paused);
     gifs.iter().rev().find(|g| crate::media::gif_button_rect(on_screen(srect, k, &g.rect)).contains(p)).map(|g| g.id)
+}
+
+#[cfg(test)]
+mod hit_tests {
+    use super::*;
+
+    fn shape(id: u32, parent: Option<usize>, rect: deckcraft_geom::Rect) -> PlacedShape {
+        PlacedShape {
+            id: ShapeId(id),
+            parent,
+            is_group: parent.is_none(),
+            rect,
+            transform: deckcraft_geom::Affine::IDENTITY,
+            parent_transform: deckcraft_geom::Affine::IDENTITY,
+            local_center: rect.center(),
+            link: None,
+        }
+    }
+
+    #[test]
+    fn motion_path_moves_the_hit_box() {
+        let shapes = [shape(1, None, deckcraft_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
+        let states = [AnimState { offset_x: 50.0, scale_x: 2.0, ..Default::default() }];
+
+        let moved = hit_point((65.0, 20.0), &shapes, &states, 0);
+        let abandoned = hit_point((15.0, 20.0), &shapes, &states, 0);
+        assert!(moved.is_some_and(|(x, y)| (10.0..=30.0).contains(&x) && (10.0..=30.0).contains(&y)));
+        assert!(!abandoned.is_some_and(|(x, y)| (10.0..=30.0).contains(&x) && (10.0..=30.0).contains(&y)));
+    }
+
+    #[test]
+    fn scale_and_rotation_move_the_hit_box() {
+        let shapes = [shape(1, None, deckcraft_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
+        let states = [AnimState { scale_x: 2.0, scale_y: 1.0, rotate: 90.0, ..Default::default() }];
+
+        // The shape center is (20, 20); local (25, 25) scales and rotates to (15, 30).
+        let transformed = hit_point((15.0, 30.0), &shapes, &states, 0);
+        assert!(transformed.is_some_and(|(x, y)| (24.9..=25.1).contains(&x) && (24.9..=25.1).contains(&y)));
+    }
+
+    #[test]
+    fn nonuniform_scale_is_inverted_in_the_rotated_shape_frame() {
+        let transform = deckcraft_geom::Affine::translate((100.0, 80.0)) * deckcraft_geom::Affine::rotate(std::f64::consts::FRAC_PI_2);
+        let mut sh = shape(1, None, deckcraft_geom::Rect::new(80.0, 80.0, 100.0, 120.0));
+        sh.transform = transform;
+        sh.local_center = deckcraft_geom::Point::new(20.0, 10.0);
+        let local = deckcraft_geom::Point::new(35.0, 15.0);
+        let scaled = deckcraft_geom::Point::new(27.5, 15.0);
+        let point = transform * scaled;
+        let original = transform * local;
+        let hit = hit_point((point.x, point.y), &[sh], &[AnimState { scale_x: 0.5, ..Default::default() }], 0).unwrap();
+        assert!((hit.0 - original.x).abs() < 1e-8 && (hit.1 - original.y).abs() < 1e-8);
+    }
+
+    #[test]
+    fn parent_animation_does_not_move_child_hit_box() {
+        let shapes =
+            [shape(1, None, deckcraft_geom::Rect::new(0.0, 0.0, 100.0, 100.0)), shape(2, Some(0), deckcraft_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
+        let states = [AnimState { offset_x: 40.0, ..Default::default() }, AnimState::default()];
+
+        let unchanged = hit_point((15.0, 20.0), &shapes, &states, 1);
+        let displaced = hit_point((55.0, 20.0), &shapes, &states, 1);
+        assert!(unchanged.is_some_and(|(x, y)| (10.0..=30.0).contains(&x) && (10.0..=30.0).contains(&y)));
+        assert!(!displaced.is_some_and(|(x, y)| (10.0..=30.0).contains(&x) && (10.0..=30.0).contains(&y)));
+    }
 }

@@ -47,6 +47,15 @@ pub fn fill_path(
                 fill_path(ctx, rctx, &Fill::Gradient(upright), ph, &paint_path, on_slide, Affine::IDENTITY, mode, alpha, pres);
                 return;
             }
+            if let Some(tiles) = gradient_tiles(g, bounds) {
+                for (tile, gradient) in tiles {
+                    ctx.set_transform(m);
+                    ctx.push_clip_layer(&tile.to_path(0.1));
+                    fill_path(ctx, rctx, &Fill::Gradient(gradient), ph, path, tile, m, mode, alpha, pres);
+                    ctx.pop_layer();
+                }
+                return;
+            }
             // A linear gradient spans its tile rectangle (the shape's box unless `tileRect` moves
             // its edges); a radial one ends on the circle around it, from a focus placed in the
             // shape's own box (PowerPoint's "from corner" presets centre the tile on the corner).
@@ -382,4 +391,62 @@ pub fn placeholder_icon(ctx: &mut RenderContext, kind: PhType, b: Rect) {
             ctx.fill_path(&kurbo::Circle::new((r.x0 + s * 0.72, r.y0 + s * 0.25), s * 0.1).to_path(0.1));
         }
     }
+}
+
+/// DrawingML flips alternate tiles, not the primary gradient's orientation.
+/// shortcut: cap tiling at 4096 cells for hostile inputs; use a bounded shader for denser tiles.
+pub(crate) fn gradient_tiles(g: &deckcraft_model::style::Gradient, bounds: Rect) -> Option<Vec<(Rect, deckcraft_model::style::Gradient)>> {
+    if !matches!(
+        g.flip,
+        Some(deckcraft_model::style::GradientFlip::X | deckcraft_model::style::GradientFlip::Y | deckcraft_model::style::GradientFlip::Xy)
+    ) {
+        return None;
+    }
+    let tile = tile_box(bounds, g.tile);
+    if tile.x0 <= bounds.x0 && tile.y0 <= bounds.y0 && tile.x1 >= bounds.x1 && tile.y1 >= bounds.y1 {
+        return None;
+    }
+    let (w, h) = (tile.width(), tile.height());
+    let (x0, x1) = (((bounds.x0 - tile.x0) / w).floor(), ((bounds.x1 - tile.x0) / w).ceil());
+    let (y0, y1) = (((bounds.y0 - tile.y0) / h).floor(), ((bounds.y1 - tile.y0) / h).ceil());
+    let count = (x1 - x0) * (y1 - y0);
+    if !count.is_finite()
+        || count > 4096.0
+        || count * g.stops.len() as f64 > 1_000_000.0
+        || [x0, x1, y0, y1].iter().any(|v| v.abs() > i32::MAX as f64)
+    {
+        return None;
+    }
+    let mut out = Vec::new();
+    for y in y0 as i32..y1 as i32 {
+        for x in x0 as i32..x1 as i32 {
+            let fx =
+                matches!(g.flip, Some(deckcraft_model::style::GradientFlip::X | deckcraft_model::style::GradientFlip::Xy)) && x.rem_euclid(2) != 0;
+            let fy =
+                matches!(g.flip, Some(deckcraft_model::style::GradientFlip::Y | deckcraft_model::style::GradientFlip::Xy)) && y.rem_euclid(2) != 0;
+            let mut gradient = g.clone();
+            gradient.tile = [0.0; 4];
+            gradient.flip = None;
+            match &mut gradient.shape {
+                GradientShape::Linear { angle, .. } => {
+                    if fx {
+                        *angle = 180.0 - *angle;
+                    }
+                    if fy {
+                        *angle = -*angle;
+                    }
+                }
+                GradientShape::Path { focus, .. } => {
+                    if fx {
+                        focus.swap(0, 2);
+                    }
+                    if fy {
+                        focus.swap(1, 3);
+                    }
+                }
+            }
+            out.push((tile + kurbo::Vec2::new(f64::from(x) * w, f64::from(y) * h), gradient));
+        }
+    }
+    Some(out)
 }
