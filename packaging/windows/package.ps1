@@ -103,6 +103,9 @@ Copy-Item (Join-Path $Bin 'inanna.exe'), (Join-Path $Bin 'inanna-cli.exe') $Stag
 
 # ---- font notices for the MSI ------------------------------------------------------------------
 # The portable ZIP already carries these notices; stage the complete files before MSI creation too.
+Invoke-Native 'stage binary-only Enki runtime' {
+  python (Join-Path $Root 'packaging/stage-enki.py') --target $Target --out (Join-Path $Stage 'enki')
+}
 $Docs = Join-Path $Stage 'font-licences'
 New-Item -ItemType Directory -Force -Path $Docs | Out-Null
 $HasCraftFontLicences = 0
@@ -134,6 +137,7 @@ $Portable = Join-Path $TargetDir "windows-package\inanna-$Version-windows-$Arch-
 Remove-Item -Recurse -Force $Portable -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Portable | Out-Null
 Copy-Item (Join-Path $Stage '*.exe') $Portable
+Copy-Item -Recurse (Join-Path $Stage 'enki') (Join-Path $Portable 'enki')
 foreach ($f in 'README.md', 'LICENSE', 'LICENSE-MIT', 'LICENSE-APACHE', 'NOTICE') {
   $p = Join-Path $Root $f
   if (Test-Path $p) { Copy-Item $p $Portable }

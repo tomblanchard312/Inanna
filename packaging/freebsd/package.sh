@@ -69,6 +69,7 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$DECKCRAFT_BUILD_DATE/g" \
   "$LINUX/$APP_ID.metainfo.xml.in" >"$STAGE/share/metainfo/$APP_ID.metainfo.xml"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
 copy_docs "$STAGE/share/doc/inanna"
+python3 "$ROOT/packaging/stage-enki.py" --target "${CARGO_BUILD_TARGET:-$(rustc -vV | sed -n 's/^host: //p')}" --out "$STAGE/lib/inanna/enki"
 
 tar -C "$WORK" -czf "$DIST/$NAME.tar.gz" "$NAME"
 if [[ -z "${CARGO_BUILD_TARGET:-}" || "$CARGO_BUILD_TARGET" == "$(rustc -vV | sed -n 's/^host: //p')" ]]; then "$STAGE/bin/inanna-cli" --version; fi # a cross-built binary cannot run on the build host

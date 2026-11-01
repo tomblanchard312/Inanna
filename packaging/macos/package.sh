@@ -121,6 +121,7 @@ cp "$ROOT/assets/app-icon/deckcraft.icns" "$APP/Contents/Resources/Inanna.icns"
 # The licences and README, as in the CLI zip, plus the licences of the embedded craft-fonts
 # fonts when built with CRAFT_FONTS_DIR. Before signing, so the seal covers them.
 copy_docs "$APP/Contents/Resources"
+python3 "$ROOT/packaging/stage-enki.py" --target "$ARCH-apple-darwin" --out "$APP/Contents/MacOS/enki"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
   -e "s/@BUILD_SHA@/${DECKCRAFT_BUILD_SHA:-unknown}/g" \
   "$HERE/Info.plist.in" >"$APP/Contents/Info.plist"
@@ -129,6 +130,10 @@ printf 'APPL????' >"$APP/Contents/PkgInfo"
 
 # Sign inside-out: nested code first, then the bundle itself (no --deep on the final signature).
 # Today the only nested code is the main executable; frameworks/helpers would be signed here too.
+for runtime in "$APP/Contents/MacOS/enki/"*; do
+  case "$runtime" in *.txt|*.json) continue ;; esac
+  sign --options runtime "$runtime"
+done
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Inanna"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
