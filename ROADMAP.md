@@ -4,7 +4,7 @@
 
 **Stage: alpha** · next: beta, ~20 points and ~120–210 h away
 
-> **Last reviewed:** 2026-10-14 · **Last updated:** 2026-11-01 · **Change:** upstream integration and PR #5 review fixes; Inanna branding and Enki integrations retained; stage and readiness estimates unchanged.
+> **Last reviewed:** 2026-10-14 · **Last updated:** 2026-11-02 · **Change:** synchronized DeckCraft through 0d45a64d (57 upstream commits); text/media/PPTX fixes, presenter improvements and portable validation integrated; Inanna branding, Enki and prior review fixes retained; readiness estimates unchanged.
 
 DeckCraft aims at full PowerPoint parity, and to be better: faster, open (a documented zip+JSON
 format plus PPTX), scriptable by agents (CLI, JSON control channel, MCP), and available everywhere
@@ -133,6 +133,7 @@ app's JSON control channel (`deckcraft --control PORT`).
 
 | Date | What landed |
 |---|---|
+| 2026-10-31 | No Fill shape interiors allow selection and editing of underlying objects, even when a quick style remains; hit-testing uses the renderer’s fill resolution. Outlines, rotation, text targets and actual fills keep their hit behaviour (#1621) |
 | 2026-10-30 | Print-preview tests use the URL emitted by egui and its exact file path; previews are explicitly removed before the macOS process exits |
 | 2026-10-30 | `slide.actions` lists shape click and hover actions and text-run hyperlinks (including table cells and grouped shapes) for audit; listing never runs an action. The UI pane is a follow-up |
 | 2026-10-29 | Slide Show: going back to the previous slide plays the transition of the slide being left, reversed, as PowerPoint does, instead of the previous slide's own entrance transition (#1531); a jump (Go to Slide, links) still plays the target slide's transition |
@@ -303,6 +304,7 @@ app's JSON control channel (`deckcraft --control PORT`).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | trivial | No Fill hit-testing follows resolved fill instead of the presence of a style (#1621); scores unchanged |
 | 2026-10-30 | trivial | Progress log: read-only slide action inspection; parity scores unchanged |
 | 2026-10-29 | trivial | Progress log: going back in the slide show reverses the left slide's transition (#1531). Scores and milestone names unchanged |
 | 2026-10-29 | trivial | Progress log: the Picture Styles row leaves room for Crop and Size (#1232). Scores and milestone names unchanged |

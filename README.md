@@ -6,6 +6,8 @@ Inanna is a presentation editor forked from [DeckCraft by the ArtCraft team](htt
 
 The inherited editor includes slides, themes, shapes, charts, speaker notes, slide shows, PowerPoint `.pptx` import/export, PDF export, a CLI and MCP automation. These are upstream capabilities; fidelity and platform behavior need validation in this fork. See the [upstream roadmap](ROADMAP.md) and [Inanna integration roadmap](docs/inanna-roadmap.md).
 
+Latest upstream integration: [DeckCraft synchronization, 2026-11-02](docs/upstream-sync-2026-11-02.md).
+
 ## Build from source
 
 ```sh
