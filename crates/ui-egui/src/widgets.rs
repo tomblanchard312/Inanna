@@ -76,7 +76,7 @@ pub fn big_button_ex(ui: &mut Ui, icon: Icon, label: &str, enabled: bool, split:
         painter.rect_filled(ar, CornerRadius::same(4), c);
     }
     let icon_rect = Rect::from_center_size(pos2(rect.center().x, rect.min.y + 19.0), vec2(30.0, 30.0));
-    icons::paint(&painter, icon_rect, icon, t.text, !enabled);
+    icons::paint_state(&painter, icon_rect, icon, t.text, !enabled, selected);
     let col = if enabled { t.text } else { t.text_faint };
     let label_rect = if split { Rect::from_min_max(rect.min, pos2(rect.max.x - SPLIT_ARROW_W, rect.max.y)) } else { rect };
     let mut y = rect.min.y + 39.0;
@@ -268,7 +268,7 @@ pub fn icon_toggle(ui: &mut Ui, icon: Icon, tip: &str, enabled: bool, on: bool) 
     if let Some(c) = bg(ui, &resp, on, &t) {
         painter.rect_filled(rect, CornerRadius::same(4), c);
     }
-    icons::paint(&painter, rect.shrink(3.0), icon, t.text, !enabled);
+    icons::paint_state(&painter, rect.shrink(3.0), icon, t.text, !enabled, on);
     if resp.has_focus() {
         painter.rect_stroke(rect, CornerRadius::same(eridu_style::radius::SMALL), Stroke::new(2.0, t.accent), egui::StrokeKind::Inside);
     }
@@ -526,7 +526,9 @@ pub fn spinner(ui: &mut Ui, id: &str, label: &str, value: f64, step: f64, suffix
     let mut out = None;
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
-        let r = ui.add(egui::TextEdit::singleline(&mut text).desired_width(width).font(theme::font(12.0))).accessible_name(format!("{label} value"));
+        let r = ui
+            .add(egui::TextEdit::singleline(&mut text).desired_width(width).font(theme::numeric(ui.ctx(), 12.0)))
+            .accessible_name(format!("{label} value"));
         if r.has_focus() {
             ui.data_mut(|d| d.insert_temp(key, text.clone()));
         } else {

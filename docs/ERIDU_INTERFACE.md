@@ -2,9 +2,9 @@
 
 Inanna is an EriduOS presentation workspace for people creating, editing and presenting slides. The slide canvas is the visual anchor. Slide thumbnails provide stable navigation on the left, the ribbon groups editing commands above the canvas, and the optional inspector stays beside the selection. File opens the backstage workspace for creating, opening and saving presentations.
 
-On first run, the File workspace offers a blank presentation and recent files. In a populated workspace, the active slide, selected ribbon tab and Present action identify the current task. Open and save errors use the existing app feedback and recovery paths. Users can continue editing when Scribe or Voice cannot connect. Scribe uses local Enki and presents changes for review and explicit application. Its existing service errors identify the missing local runtime or model.
+On first run, the File workspace offers a blank presentation and recent files. In a populated workspace, the active slide, selected ribbon tab and Present action identify the current task. Open and save errors use the existing app feedback and recovery paths. Users can continue editing when Enki or Voice cannot connect. The Enki panel uses the local daemon and presents changes for review and explicit application. Its existing service errors identify the missing local runtime or model.
 
-The GUI consumes semantic colors and base sizing from the pinned shared Eridu style library. Present uses its copper action tokens. The initial appearance follows the desktop, with light as the fallback. Users can select System, Light or Dark in File → Account. Preferences retains keyboard access, a visible interface size label and scaling through 200%. The ribbon keeps its scroll controls, shortcut names and accessible labels. The existing Inter and multilingual font fallback pipeline serves the interface. Slide content uses document fonts.
+The GUI consumes semantic colors and base sizing from the pinned shared Eridu style library. Present uses its copper action tokens. The initial appearance follows the desktop, with light as the fallback. Users can select System, Light or Dark in File → Account. Preferences retains keyboard access, a visible interface size label and scaling through 200%. The ribbon keeps its scroll controls, shortcut names and accessible labels. Inter and semibold Inter serve body and headings, Inter Tabular serves measurements, and JetBrains Mono serves technical text. The existing multilingual fallback pipeline remains available. Common controls use Phosphor regular and selected toggles use Phosphor fill. Slide content uses document fonts.
 
 Linux is the primary validation platform. FreeBSD is a secondary target. Windows, macOS and the browser are existing build targets with separate runtime acceptance. Illumos remains planned.
 
@@ -18,9 +18,15 @@ contrast, focus color contrast, and ribbon visibility at the tested widths.
 The browser entry point compiled for WebAssembly. The light and dark editor
 screenshots were inspected at 1440 × 900 using the headless test harness.
 
+The native Inanna debug build ran in an EriduOS live guest under KDE Plasma
+Wayland. With Enki open and the app set to System appearance, the same process
+followed Breeze Light to Breeze Dark. At 200% KDE output scaling on a 1920 ×
+1080 display, the ribbon, slide canvas, status bar, and Enki prompt and Generate
+button remained visible. This run exercised the editor and assistant panel.
+
 ## Adoption still to verify
 
 | Scope | Owner | Reason and follow-up |
 |---|---|---|
-| Phosphor and typography roles | Inanna maintainers | The existing icon set and compact ribbon metrics remain. The shared font installer bundles Source Serif, which Inanna's asset policy excludes. Selective icon and font installation, tabular figures, and the other type roles need a follow-up. [Eridu typography tracking](https://github.com/tomblanchard312/EriduOs/issues/27) |
-| Native accessibility and workflow acceptance | Inanna maintainers | Test live KDE theme changes, screen readers, 200% scaling, reduced motion, localized text expansion, and FreeBSD installation. Track findings using the adoption checklist linked above. |
+| Specialized icons and display type | Inanna maintainers | Office commands without a matching Phosphor glyph retain their original icon. The compact ribbon keeps its sizing and large headings use Inter Semibold under the Source Serif asset exclusion. [Eridu typography tracking](https://github.com/tomblanchard312/EriduOs/issues/27) |
+| Native accessibility and workflow acceptance | Inanna maintainers | Test screen readers, reduced motion, localized text expansion, and FreeBSD installation. Track findings using the adoption checklist linked above. |

@@ -23,7 +23,7 @@ pub fn status_bar(app: &mut SlideApp, ui: &mut Ui) {
         let p = ui.painter();
         // Left to right: slide counter, language, status message. Each starts at its usual column, or
         // after the one before it when that runs long ("Slide 100 of 120", "… (not checked)").
-        let sr = p.text(pos2(rect.min.x + 14.0, rect.center().y), Align2::LEFT_CENTER, &left, theme::font(12.0), t.text_dim);
+        let sr = p.text(pos2(rect.min.x + 14.0, rect.center().y), Align2::LEFT_CENTER, &left, theme::numeric(ui.ctx(), 12.0), t.text_dim);
         shown_text(ui, sr, "status_slide", &left);
         // Where the controls on the right begin; nothing on the left paints or clicks past it.
         let right_x = rect.max.x - 560.0;

@@ -160,7 +160,7 @@ pub fn apply(ctx: &egui::Context, t: &Tokens) {
     });
 }
 
-/// UI fonts: Inter (from craft-fonts) when embedded, a Japanese UI face for CJK, then egui's.
+/// UI fonts from the approved Eridu subset, with Craft script and egui fallbacks.
 pub fn install_fonts(ctx: &egui::Context) {
     install_fonts_with(ctx, &[]);
 }
@@ -177,8 +177,7 @@ pub fn font_definitions(extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) -> 
     let mut defs = FontDefinitions::default();
     let mut names = vec![];
     for (i, f) in deckcraft_fonts::CRAFT_FONTS.iter().enumerate() {
-        let wanted = (f.family == "Inter" && (f.style == "Regular" || f.style == "SemiBold" || f.style == "Bold"))
-            || (f.family == "BIZ UDPGothic" && f.style == "Regular")
+        let wanted = (f.family == "BIZ UDPGothic" && f.style == "Regular")
             // Exact craft-fonts family names: the Korean face is "NanumGothic" (no space), and
             // the symbol faces are "Noto Sans Symbols" / "Noto Sans Symbols 2". A near-miss here
             // would leave Hangul and the ◉ laser toggle without a glyph. Hebrew backs the
@@ -194,14 +193,27 @@ pub fn font_definitions(extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) -> 
         defs.font_data.insert(name.clone(), std::sync::Arc::new(FontData::from_static(f.bytes)));
         names.push((f.family, f.style, name));
     }
-    let regular: Vec<String> = names.iter().filter(|(fam, st, _)| !(*fam == "Inter" && *st != "Regular")).map(|(_, _, n)| n.clone()).collect();
-    if let Some(list) = defs.families.get_mut(&FontFamily::Proportional) {
-        for (k, n) in regular.iter().enumerate() {
-            list.insert(k, n.clone());
-        }
+    for (name, bytes) in [
+        ("eridu-inter", include_bytes!("../../../vendor/eridu-fonts/Inter-Regular.ttf").as_slice()),
+        ("eridu-semibold", include_bytes!("../../../vendor/eridu-fonts/Inter-SemiBold.ttf").as_slice()),
+        ("eridu-numeric", include_bytes!("../../../vendor/eridu-fonts/InterTabular-Regular.ttf").as_slice()),
+        ("eridu-mono", include_bytes!("../../../vendor/eridu-fonts/JetBrainsMono-Regular.ttf").as_slice()),
+        ("phosphor", include_bytes!("../../../vendor/eridu-fonts/phosphor/Phosphor-Regular.ttf").as_slice()),
+        ("phosphor-fill", include_bytes!("../../../vendor/eridu-fonts/phosphor/Phosphor-Fill.ttf").as_slice()),
+        ("eridu-icons", include_bytes!("../../../vendor/eridu-fonts/eridu-icons/EriduIcons-Regular.ttf").as_slice()),
+        ("eridu-icons-fill", include_bytes!("../../../vendor/eridu-fonts/eridu-icons/EriduIcons-Fill.ttf").as_slice()),
+    ] {
+        defs.font_data.insert(name.into(), std::sync::Arc::new(FontData::from_static(bytes)));
     }
+    let regular = defs.families.entry(FontFamily::Proportional).or_default();
+    regular.splice(0..0, std::iter::once("eridu-inter".into()).chain(names.iter().map(|(_, _, name)| name.clone())));
+    let numeric = std::iter::once("eridu-numeric".into()).chain(regular.iter().cloned()).collect();
+    defs.families.insert(FontFamily::Name("numeric".into()), numeric);
+    defs.families.entry(FontFamily::Monospace).or_default().insert(0, "eridu-mono".into());
+    defs.families.insert(FontFamily::Name("phosphor".into()), vec!["phosphor".into(), "eridu-icons".into()]);
+    defs.families.insert(FontFamily::Name("phosphor-fill".into()), vec!["phosphor-fill".into(), "eridu-icons-fill".into()]);
     // A bold family for headings and selected tabs.
-    let mut bold: Vec<String> = names.iter().filter(|(fam, st, _)| *fam == "Inter" && *st == "SemiBold").map(|(_, _, n)| n.clone()).collect();
+    let mut bold = vec!["eridu-semibold".into()];
     bold.extend(defs.families.get(&FontFamily::Proportional).cloned().unwrap_or_default());
     defs.families.insert(FontFamily::Name("bold".into()), bold);
     // Hack is already bundled for Monospace and covers the interface's arrows and triangles.
@@ -245,6 +257,15 @@ pub fn add_fallback_faces(defs: &mut FontDefinitions, faces: &[std::sync::Arc<de
 
 pub fn bold(size: f32) -> egui::FontId {
     egui::FontId::new(size, FontFamily::Name("bold".into()))
+}
+
+pub fn numeric(ctx: &egui::Context, size: f32) -> egui::FontId {
+    let family = FontFamily::Name("numeric".into());
+    if ctx.fonts(|fonts| fonts.definitions().families.contains_key(&family)) {
+        egui::FontId::new(size, family)
+    } else {
+        egui::FontId::proportional(size)
+    }
 }
 
 pub fn font(size: f32) -> egui::FontId {

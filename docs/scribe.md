@@ -1,12 +1,12 @@
-# Scribe in Inanna
+# Enki in Inanna
 
 Status: initial native integration, 2026-10-30.
 
-Open Scribe from the title bar or View tab/menu; closing the panel leaves those entry points available. The button and panel use the suite's original blue folded-page S icon, sourced from Nisaba at the immutable revision in ATTRIBUTION.md.
+Open Enki from the title bar or View tab/menu; closing the panel leaves those entry points available. The button and panel use the suite's original blue folded-page S icon, sourced from Nisaba at the immutable revision in ATTRIBUTION.md.
 
 ## Setup
 
-Run a compatible local Enki daemon with registered language and diffusion models. Text uses Enki protocol v2; image/logo generation requires v3 and the image worker. Scribe selects a registered Phi-4 model first and falls back to Qwen if it is unavailable or fails to load. Image generation uses the daemon’s current recommendation. Model selection and identifiers are not shown in the user interface. Missing services or models produce visible errors. Inanna neither downloads models nor installs or updates the daemon.
+Run a compatible local Enki daemon with registered language and diffusion models. Text uses Enki protocol v2; image/logo generation requires v3 and the image worker. Enki selects a registered Phi-4 model first and falls back to Qwen if it is unavailable or fails to load. Image generation uses the daemon’s current recommendation. Model selection and identifiers are not shown in the user interface. Missing services or models produce visible errors. Inanna neither downloads models nor installs or updates the daemon.
 
 The SDK is pinned to the published Nisaba snapshot in Qanloom at commit 3d75b6a77231ade0c906140e16f9ef66613e0b29, because Enki's published default branch does not yet include those image APIs. Its client/protocol packages retain their UNLICENSED designation. Inanna's MIT/Apache terms do not grant rights to those dependencies; resolve their distribution terms before a public binary release.
 
