@@ -1341,7 +1341,11 @@ fn dlg_preferences(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
         d.params = json!({ "before": preferences_snapshot(app) });
     }
     ui.label(egui::RichText::new("General").font(theme::bold(13.0)));
-    let mut dark = app.ui.brightness == theme::Brightness::Dark;
+    let mut follows_desktop = app.ui.brightness == theme::Brightness::System;
+    if ui.checkbox(&mut follows_desktop, "Follow desktop appearance").changed() {
+        let _ = app.run("view.dark", json!({"system": follows_desktop, "on": theme::Tokens::get(ui.ctx()).dark}));
+    }
+    let mut dark = theme::Tokens::get(ui.ctx()).dark;
     if ui.checkbox(&mut dark, "Dark appearance").changed() {
         let _ = app.run("view.dark", json!({"on": dark}));
     }
@@ -1350,8 +1354,9 @@ fn dlg_preferences(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
     // on release, and at once from the keyboard.
     let pending = d.fields.get("uiScale").and_then(|v| v.parse::<f32>().ok());
     let mut scale = pending.unwrap_or(app.ui.ui_scale);
-    let r = ui.add(egui::Slider::new(&mut scale, 0.75..=1.75));
-    // No visible label here (the row is laid out to fit); the accessible name only.
+    ui.label("Interface size");
+    let r = ui.add(egui::Slider::new(&mut scale, 0.75..=2.0));
+    // Keep the slider name stable for assistive technology.
     let enabled = r.enabled();
     r.widget_info(|| egui::WidgetInfo::slider(enabled, f64::from(scale), "Interface size"));
     if r.is_pointer_button_down_on() {

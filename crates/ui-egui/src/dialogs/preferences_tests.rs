@@ -6,7 +6,6 @@ use egui_kittest::kittest::Queryable;
 use egui_kittest::{Harness, Node};
 use serde_json::json;
 
-use crate::theme::Brightness;
 use crate::{Services, SlideApp};
 
 /// The slider itself, not the label drawn beside it.
@@ -33,10 +32,6 @@ fn harness() -> Harness<'static, SlideApp> {
 fn open_options(h: &mut Harness<'_, SlideApp>) {
     h.state_mut().run("app.preferences", json!({})).expect("open Options");
     h.run_steps(3);
-}
-
-fn dark(app: &SlideApp) -> bool {
-    app.ui.brightness == Brightness::Dark
 }
 
 /// A checkbox applies as it is toggled and Cancel puts the old value back.
@@ -96,12 +91,12 @@ fn options_cancel_undoes_every_editing_setting() {
 #[test]
 fn options_cancel_puts_the_appearance_and_scale_back() {
     let mut h = harness();
-    let (dark_before, scale_before) = (dark(h.state()), h.state().ui.ui_scale);
+    let (dark_before, scale_before) = (h.state().ui.brightness, h.state().ui.ui_scale);
     open_options(&mut h);
 
     h.query_by_label("Dark appearance").expect("the checkbox is there").click();
     h.run_steps(2);
-    assert_ne!(dark(h.state()), dark_before, "the appearance applies as it is toggled");
+    assert_ne!(h.state().ui.brightness, dark_before, "the appearance applies as it is toggled");
 
     // Clicking the slider's middle sets it near the middle of its range, away from the default.
     interface_size(&h).click();
@@ -111,7 +106,7 @@ fn options_cancel_puts_the_appearance_and_scale_back() {
 
     h.key_press(egui::Key::Escape);
     h.run_steps(2);
-    assert_eq!(dark(h.state()), dark_before, "Esc restores the appearance");
+    assert_eq!(h.state().ui.brightness, dark_before, "Esc restores the appearance");
     assert!((h.state().ui.ui_scale - scale_before).abs() < 1e-3, "Esc restores the size");
     assert!(h.state().dialog.is_none(), "and the dialog closes");
 }

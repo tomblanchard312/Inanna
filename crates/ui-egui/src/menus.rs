@@ -216,7 +216,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<(&'static str, &'static str)>)> {
         (
             "View",
             vec![
-                ("Scribe", "app.scribe"),
+                ("Enki", "app.scribe"),
                 ("Normal", "view.normal"),
                 ("Slide Sorter", "view.sorter"),
                 ("Notes Page", "view.notesPage"),

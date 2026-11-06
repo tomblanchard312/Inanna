@@ -17,10 +17,12 @@ impl SlideApp {
             ctx.request_discard("install interface fonts before layout");
             return false;
         }
-        if self.restyle {
-            theme::apply(ctx, &theme::Tokens::for_brightness(self.ui.brightness));
+        let tokens = theme::Tokens::for_brightness(self.ui.brightness, ctx);
+        if self.restyle || tokens.dark != ctx.global_style().visuals.dark_mode {
+            theme::apply(ctx, &tokens);
             self.restyle = false;
         }
+        self.appearance_dark = tokens.dark;
         self.fonts_ready = true;
         true
     }

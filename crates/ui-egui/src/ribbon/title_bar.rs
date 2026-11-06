@@ -55,7 +55,6 @@ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
         let dirty = app.session.active().is_some_and(|d| d.is_dirty());
         crate::qat::show(app, &mut child);
         let title = app.session.active().map(|d| format!("{}{}", d.title(), if dirty { " — Edited" } else { "" })).unwrap_or_else(|| "Inanna".into());
-        ui.painter().text(rect.center(), Align2::CENTER_CENTER, title, theme::font(13.0), t.text);
         // Right side.
         let mut right = ui.new_child(
             egui::UiBuilder::new()
@@ -70,9 +69,10 @@ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
         crate::scribe::button(app, &mut right);
         #[cfg(not(target_arch = "wasm32"))]
         app.speech.button(&mut right, "Voice");
-        let share = right.add(
-            egui::Button::new(egui::RichText::new("  Present  ").color(t.accent_text).font(theme::bold(13.0)))
-                .fill(t.accent)
+        let share = right.add_enabled(
+            has_doc,
+            egui::Button::new(egui::RichText::new("  Present  ").color(t.on_primary).font(theme::bold(13.0)))
+                .fill(t.primary)
                 .corner_radius(control_h / 2.0)
                 .min_size(vec2(84.0, control_h)),
         );
@@ -83,16 +83,15 @@ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
         if icon_toggle(&mut right, Icon::CommentsBubble, "Comments", has_doc, app.ui.pane.as_deref() == Some("comments")).clicked() {
             let _ = app.run("view.pane", json!({"pane": "comments", "toggle": true}));
         }
-        if icon_toggle(
-            &mut right,
-            if app.ui.brightness == theme::Brightness::Dark { Icon::Sparkle } else { Icon::Palette },
-            "Light/Dark appearance",
-            true,
-            false,
-        )
-        .clicked()
-        {
-            let _ = app.run("view.dark", json!({}));
+        if icon_toggle(&mut right, if t.dark { Icon::Sparkle } else { Icon::Palette }, "Light/Dark appearance", true, false).clicked() {
+            let _ = app.run("view.dark", json!({"on": !t.dark}));
+        }
+        let title_area = Rect::from_min_max(
+            pos2(child.min_rect().right() + eridu_style::space::SM, rect.top()),
+            pos2(right.min_rect().left() - eridu_style::space::SM, rect.bottom()),
+        );
+        if title_area.is_positive() {
+            ui.painter().with_clip_rect(title_area).text(title_area.center(), Align2::CENTER_CENTER, title, theme::font(14.0), t.text);
         }
     });
 }

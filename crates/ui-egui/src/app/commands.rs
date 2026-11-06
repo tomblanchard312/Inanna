@@ -150,8 +150,21 @@ impl SlideApp {
             }
             "view.collapseRibbon" => self.ui.ribbon_collapsed = !self.ui.ribbon_collapsed,
             "view.dark" => {
-                let on = self.flag(p, self.ui.brightness == theme::Brightness::Dark);
-                self.ui.brightness = if on { theme::Brightness::Dark } else { theme::Brightness::Light };
+                let on = self.flag(
+                    p,
+                    match self.ui.brightness {
+                        theme::Brightness::System => self.appearance_dark,
+                        theme::Brightness::Light => false,
+                        theme::Brightness::Dark => true,
+                    },
+                );
+                self.ui.brightness = if p.get("system").and_then(Value::as_bool) == Some(true) {
+                    theme::Brightness::System
+                } else if on {
+                    theme::Brightness::Dark
+                } else {
+                    theme::Brightness::Light
+                };
                 self.restyle = true;
             }
             "view.grayscale" => self.ui.grayscale = self.flag(p, self.ui.grayscale),
@@ -226,7 +239,7 @@ impl SlideApp {
                     self.scribe.open = p.get("on").and_then(Value::as_bool).unwrap_or(true);
                 }
                 #[cfg(target_arch = "wasm32")]
-                return Err("Scribe is available in the desktop app".into());
+                return Err("Enki is available in the desktop app".into());
             }
             "app.about" => self.dialog = Some(dialogs::Dialog::new("about")),
             "app.checkUpdates" => {

@@ -1,4 +1,4 @@
-//! Design tokens (light, PowerPoint-like; and dark) and fonts for the UI.
+//! Eridu Design System adapter and fonts for the UI.
 
 use egui::{Color32, CornerRadius, FontData, FontDefinitions, FontFamily, Stroke, Visuals};
 use serde::{Deserialize, Serialize};
@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Brightness {
-    Light,
     #[default]
+    System,
+    Light,
     Dark,
 }
 
@@ -35,6 +36,8 @@ pub struct Tokens {
     /// DeckCraft's accent (tabs underline, selected thumbnail, primary buttons).
     pub accent: Color32,
     pub accent_text: Color32,
+    pub primary: Color32,
+    pub on_primary: Color32,
     pub contextual: Color32,
     pub selection: Color32,
     pub handle_fill: Color32,
@@ -54,75 +57,58 @@ pub struct Tokens {
 
 impl Tokens {
     pub fn light() -> Self {
-        Tokens {
-            dark: false,
-            chrome: Color32::from_rgb(0xF5, 0xF5, 0xF5),
-            card: Color32::WHITE,
-            card_border: Color32::from_rgb(0xE3, 0xE3, 0xE3),
-            text_field: Color32::from_rgb(0xEB, 0xEB, 0xEB),
-            canvas: Color32::from_rgb(0xF0, 0xF0, 0xF0),
-            text: Color32::from_rgb(0x24, 0x24, 0x24),
-            text_dim: Color32::from_rgb(0x5C, 0x5C, 0x5C),
-            text_faint: Color32::from_rgb(0x99, 0x99, 0x99),
-            border: Color32::from_rgb(0xD6, 0xD6, 0xD6),
-            separator: Color32::from_rgb(0xE1, 0xE1, 0xE1),
-            hover: Color32::from_rgb(0xEB, 0xEB, 0xEB),
-            pressed: Color32::from_rgb(0xDE, 0xDE, 0xDE),
-            selected: Color32::from_rgb(0xE6, 0xE6, 0xE6),
-            accent: Color32::from_rgb(0x25, 0x63, 0xEB),
-            accent_text: Color32::WHITE,
-            contextual: Color32::from_rgb(0x1D, 0x4E, 0xD8),
-            selection: Color32::from_rgb(0x7A, 0x7A, 0x7A),
-            handle_fill: Color32::WHITE,
-            handle_stroke: Color32::from_rgb(0x6E, 0x6E, 0x6E),
-            guide: Color32::from_rgb(0xE8, 0x5D, 0x2A),
-            caret: Color32::BLACK,
-            text_selection: Color32::from_rgba_unmultiplied(0x5A, 0x8F, 0xE0, 90),
-            field_bg: Color32::WHITE,
-            control: Color32::from_rgb(0xD6, 0xD6, 0xD6),
-            control_hover: Color32::from_rgb(0xC8, 0xC8, 0xC8),
-            control_pressed: Color32::from_rgb(0xBC, 0xBC, 0xBC),
-            shadow: Color32::from_black_alpha(28),
-        }
+        Self::from_eridu(eridu_style::LIGHT)
     }
+
     pub fn dark() -> Self {
-        Tokens {
-            dark: true,
-            chrome: Color32::from_rgb(0x26, 0x26, 0x26),
-            card: Color32::from_rgb(0x33, 0x33, 0x33),
-            card_border: Color32::from_rgb(0x44, 0x44, 0x44),
-            text_field: Color32::from_rgb(0x2A, 0x2A, 0x2A),
-            canvas: Color32::from_rgb(0x1E, 0x1E, 0x1E),
-            text: Color32::from_rgb(0xEE, 0xEE, 0xEE),
-            text_dim: Color32::from_rgb(0xBB, 0xBB, 0xBB),
-            text_faint: Color32::from_rgb(0x88, 0x88, 0x88),
-            border: Color32::from_rgb(0x4A, 0x4A, 0x4A),
-            separator: Color32::from_rgb(0x48, 0x48, 0x48),
-            hover: Color32::from_rgb(0x40, 0x40, 0x40),
-            pressed: Color32::from_rgb(0x4C, 0x4C, 0x4C),
-            selected: Color32::from_rgb(0x47, 0x47, 0x47),
-            accent: Color32::from_rgb(0x3B, 0x82, 0xF6),
-            accent_text: Color32::WHITE,
-            contextual: Color32::from_rgb(0x60, 0xA5, 0xFA),
-            selection: Color32::from_rgb(0xAA, 0xAA, 0xAA),
+        Self::from_eridu(eridu_style::DARK)
+    }
+
+    fn from_eridu(t: eridu_style::Tokens) -> Self {
+        // Rails and unchecked boxes rely on their fill for the entire boundary.
+        let control = if t.dark { t.border } else { t.border.lerp_to_gamma(t.text, 0.45) };
+        Self {
+            dark: t.dark,
+            chrome: t.background,
+            card: t.surface,
+            card_border: t.border,
+            text_field: t.surface_subtle,
+            canvas: t.background,
+            text: t.text,
+            text_dim: t.text_muted,
+            text_faint: t.text_muted,
+            border: t.border,
+            separator: t.border,
+            hover: t.surface_hover,
+            pressed: t.selected,
+            selected: t.selected,
+            accent: t.accent,
+            accent_text: t.accent_text,
+            primary: t.primary,
+            on_primary: t.on_primary,
+            contextual: t.accent,
+            selection: t.focus,
             handle_fill: Color32::WHITE,
-            handle_stroke: Color32::from_rgb(0x6E, 0x6E, 0x6E),
-            guide: Color32::from_rgb(0xF2, 0x8A, 0x4B),
+            handle_stroke: eridu_style::LIGHT.text_muted,
+            guide: t.primary,
             caret: Color32::BLACK,
-            text_selection: Color32::from_rgba_unmultiplied(0x5A, 0x8F, 0xE0, 90),
-            field_bg: Color32::from_rgb(0x2A, 0x2A, 0x2A),
-            control: Color32::from_rgb(0x2A, 0x2A, 0x2A),
-            control_hover: Color32::from_rgb(0x40, 0x40, 0x40),
-            control_pressed: Color32::from_rgb(0x4C, 0x4C, 0x4C),
-            shadow: Color32::from_black_alpha(90),
+            text_selection: Color32::from_rgba_unmultiplied(t.accent.r(), t.accent.g(), t.accent.b(), 90),
+            field_bg: t.surface,
+            control,
+            control_hover: control.lerp_to_gamma(t.text, 0.07),
+            control_pressed: control.lerp_to_gamma(t.text, 0.14),
+            shadow: Color32::from_black_alpha(if t.dark { 90 } else { 28 }),
         }
     }
-    pub fn for_brightness(b: Brightness) -> Self {
+
+    pub fn for_brightness(b: Brightness, ctx: &egui::Context) -> Self {
         match b {
-            Brightness::Light => Self::light(),
+            Brightness::System if eridu_style::system::prefers_dark(ctx) == Some(true) => Self::dark(),
+            Brightness::System | Brightness::Light => Self::light(),
             Brightness::Dark => Self::dark(),
         }
     }
+
     pub fn get(ctx: &egui::Context) -> Self {
         if ctx.global_style().visuals.dark_mode { Self::dark() } else { Self::light() }
     }
@@ -137,14 +123,17 @@ pub fn apply(ctx: &egui::Context, t: &Tokens) {
     v.text_edit_bg_color = Some(t.text_field);
     v.faint_bg_color = t.hover;
     v.window_stroke = Stroke::new(1.0, t.card_border);
-    v.window_corner_radius = CornerRadius::same(10);
-    v.menu_corner_radius = CornerRadius::same(8);
-    v.selection.bg_fill = t.accent.gamma_multiply(0.85);
-    v.selection.stroke = Stroke::new(1.0, t.accent_text);
+    v.window_corner_radius = CornerRadius::same(eridu_style::radius::LARGE);
+    v.menu_corner_radius = CornerRadius::same(eridu_style::radius::MEDIUM);
+    v.selection.bg_fill = t.selected;
+    v.selection.stroke = Stroke::new(2.0, t.accent);
     v.hyperlink_color = t.accent;
+    let semantic = if t.dark { eridu_style::DARK } else { eridu_style::LIGHT };
+    v.error_fg_color = semantic.danger;
+    v.warn_fg_color = semantic.warning;
     v.override_text_color = Some(t.text);
     for w in [&mut v.widgets.noninteractive, &mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active, &mut v.widgets.open] {
-        w.corner_radius = CornerRadius::same(5);
+        w.corner_radius = CornerRadius::same(eridu_style::radius::SMALL);
     }
     v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, t.separator);
     v.widgets.inactive.weak_bg_fill = Color32::TRANSPARENT;
@@ -158,19 +147,20 @@ pub fn apply(ctx: &egui::Context, t: &Tokens) {
     v.widgets.open.weak_bg_fill = t.pressed;
     v.window_shadow = egui::epaint::Shadow { offset: [0, 4], blur: 18, spread: 0, color: t.shadow };
     v.popup_shadow = egui::epaint::Shadow { offset: [0, 3], blur: 12, spread: 0, color: t.shadow };
+    ctx.set_theme(if t.dark { egui::Theme::Dark } else { egui::Theme::Light });
     ctx.set_visuals(v);
     ctx.global_style_mut(|s| {
-        s.spacing.item_spacing = egui::vec2(6.0, 4.0);
-        s.spacing.button_padding = egui::vec2(6.0, 3.0);
+        s.spacing.item_spacing = egui::vec2(eridu_style::space::SM, eridu_style::space::XS);
+        s.spacing.button_padding = egui::vec2(eridu_style::space::SM, eridu_style::space::XS);
         s.spacing.interact_size.y = 22.0;
-        s.text_styles.insert(egui::TextStyle::Body, egui::FontId::proportional(13.0));
-        s.text_styles.insert(egui::TextStyle::Button, egui::FontId::proportional(13.0));
-        s.text_styles.insert(egui::TextStyle::Small, egui::FontId::proportional(11.0));
-        s.text_styles.insert(egui::TextStyle::Heading, egui::FontId::proportional(18.0));
+        s.text_styles.insert(egui::TextStyle::Body, egui::FontId::proportional(eridu_style::size::BODY));
+        s.text_styles.insert(egui::TextStyle::Button, egui::FontId::proportional(eridu_style::size::BODY));
+        s.text_styles.insert(egui::TextStyle::Small, egui::FontId::proportional(eridu_style::size::CAPTION));
+        s.text_styles.insert(egui::TextStyle::Heading, bold(eridu_style::size::SECTION_HEADING));
     });
 }
 
-/// UI fonts: Inter (from craft-fonts) when embedded, a Japanese UI face for CJK, then egui's.
+/// UI fonts from the approved Eridu subset, with Craft script and egui fallbacks.
 pub fn install_fonts(ctx: &egui::Context) {
     install_fonts_with(ctx, &[]);
 }
@@ -187,8 +177,7 @@ pub fn font_definitions(extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) -> 
     let mut defs = FontDefinitions::default();
     let mut names = vec![];
     for (i, f) in deckcraft_fonts::CRAFT_FONTS.iter().enumerate() {
-        let wanted = (f.family == "Inter" && (f.style == "Regular" || f.style == "SemiBold" || f.style == "Bold"))
-            || (f.family == "BIZ UDPGothic" && f.style == "Regular")
+        let wanted = (f.family == "BIZ UDPGothic" && f.style == "Regular")
             // Exact craft-fonts family names: the Korean face is "NanumGothic" (no space), and
             // the symbol faces are "Noto Sans Symbols" / "Noto Sans Symbols 2". A near-miss here
             // would leave Hangul and the ◉ laser toggle without a glyph. Hebrew backs the
@@ -204,14 +193,27 @@ pub fn font_definitions(extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) -> 
         defs.font_data.insert(name.clone(), std::sync::Arc::new(FontData::from_static(f.bytes)));
         names.push((f.family, f.style, name));
     }
-    let regular: Vec<String> = names.iter().filter(|(fam, st, _)| !(*fam == "Inter" && *st != "Regular")).map(|(_, _, n)| n.clone()).collect();
-    if let Some(list) = defs.families.get_mut(&FontFamily::Proportional) {
-        for (k, n) in regular.iter().enumerate() {
-            list.insert(k, n.clone());
-        }
+    for (name, bytes) in [
+        ("eridu-inter", include_bytes!("../../../vendor/eridu-fonts/Inter-Regular.ttf").as_slice()),
+        ("eridu-semibold", include_bytes!("../../../vendor/eridu-fonts/Inter-SemiBold.ttf").as_slice()),
+        ("eridu-numeric", include_bytes!("../../../vendor/eridu-fonts/InterTabular-Regular.ttf").as_slice()),
+        ("eridu-mono", include_bytes!("../../../vendor/eridu-fonts/JetBrainsMono-Regular.ttf").as_slice()),
+        ("phosphor", include_bytes!("../../../vendor/eridu-fonts/phosphor/Phosphor-Regular.ttf").as_slice()),
+        ("phosphor-fill", include_bytes!("../../../vendor/eridu-fonts/phosphor/Phosphor-Fill.ttf").as_slice()),
+        ("eridu-icons", include_bytes!("../../../vendor/eridu-fonts/eridu-icons/EriduIcons-Regular.ttf").as_slice()),
+        ("eridu-icons-fill", include_bytes!("../../../vendor/eridu-fonts/eridu-icons/EriduIcons-Fill.ttf").as_slice()),
+    ] {
+        defs.font_data.insert(name.into(), std::sync::Arc::new(FontData::from_static(bytes)));
     }
+    let regular = defs.families.entry(FontFamily::Proportional).or_default();
+    regular.splice(0..0, std::iter::once("eridu-inter".into()).chain(names.iter().map(|(_, _, name)| name.clone())));
+    let numeric = std::iter::once("eridu-numeric".into()).chain(regular.iter().cloned()).collect();
+    defs.families.insert(FontFamily::Name("numeric".into()), numeric);
+    defs.families.entry(FontFamily::Monospace).or_default().insert(0, "eridu-mono".into());
+    defs.families.insert(FontFamily::Name("phosphor".into()), vec!["phosphor".into(), "eridu-icons".into()]);
+    defs.families.insert(FontFamily::Name("phosphor-fill".into()), vec!["phosphor-fill".into(), "eridu-icons-fill".into()]);
     // A bold family for headings and selected tabs.
-    let mut bold: Vec<String> = names.iter().filter(|(fam, st, _)| *fam == "Inter" && *st == "SemiBold").map(|(_, _, n)| n.clone()).collect();
+    let mut bold = vec!["eridu-semibold".into()];
     bold.extend(defs.families.get(&FontFamily::Proportional).cloned().unwrap_or_default());
     defs.families.insert(FontFamily::Name("bold".into()), bold);
     // Hack is already bundled for Monospace and covers the interface's arrows and triangles.
@@ -255,6 +257,15 @@ pub fn add_fallback_faces(defs: &mut FontDefinitions, faces: &[std::sync::Arc<de
 
 pub fn bold(size: f32) -> egui::FontId {
     egui::FontId::new(size, FontFamily::Name("bold".into()))
+}
+
+pub fn numeric(ctx: &egui::Context, size: f32) -> egui::FontId {
+    let family = FontFamily::Name("numeric".into());
+    if ctx.fonts(|fonts| fonts.definitions().families.contains_key(&family)) {
+        egui::FontId::new(size, family)
+    } else {
+        egui::FontId::proportional(size)
+    }
 }
 
 pub fn font(size: f32) -> egui::FontId {
@@ -301,6 +312,42 @@ mod tests {
 
     /// The UI font library supplies default text fonts and an explicit monochrome emoji face,
     /// independent of kittest defaults.
+    #[test]
+    fn desktop_appearance_follows_the_reported_theme_and_explicit_overrides_win() {
+        use super::{Brightness, Tokens};
+        let ctx = egui::Context::default();
+        for theme in [egui::Theme::Dark, egui::Theme::Light] {
+            ctx.run_ui(egui::RawInput { system_theme: Some(theme), ..Default::default() }, |ui| {
+                assert_eq!(Tokens::for_brightness(Brightness::System, ui.ctx()).dark, theme == egui::Theme::Dark);
+                assert!(Tokens::for_brightness(Brightness::Dark, ui.ctx()).dark);
+                assert!(!Tokens::for_brightness(Brightness::Light, ui.ctx()).dark);
+            })
+            .textures_delta
+            .clear();
+        }
+    }
+
+    #[test]
+    fn eridu_chrome_text_and_actions_meet_aa_contrast() {
+        for t in [super::Tokens::light(), super::Tokens::dark()] {
+            for surface in [t.chrome, t.card] {
+                assert!(eridu_style::contrast(t.control, surface) >= 3.0);
+                assert!(eridu_style::contrast(t.accent, surface) >= 3.0);
+            }
+            for (ink, surface) in [
+                (t.text, t.chrome),
+                (t.text_dim, t.card),
+                (t.text, t.text_field),
+                (t.text, t.hover),
+                (t.text, t.selected),
+                (t.on_primary, t.primary),
+                (t.accent_text, t.accent),
+            ] {
+                assert!(eridu_style::contrast(ink, surface) >= 4.5, "{ink:?} on {surface:?}");
+            }
+        }
+    }
+
     #[test]
     fn the_ui_library_has_default_fonts_and_explicit_monochrome_emoji_for_tests() {
         // `egui`'s `default_fonts` is no longer a default feature and kittest's own dev
@@ -447,7 +494,7 @@ mod tests {
         );
         assert_eq!(text, "deck שלום 42");
         ctx.fonts_mut(|fonts| {
-            let galley = fonts.layout_no_wrap(text.clone(), egui::FontId::proportional(13.0), egui::Color32::WHITE);
+            let galley = fonts.layout_no_wrap(text.clone(), egui::FontId::proportional(eridu_style::size::BODY), egui::Color32::WHITE);
             let row = &galley.rows[0];
             let x = |c| row.glyphs.iter().find(|g| g.chr == c).unwrap().pos.x;
             assert!(x('ש') > x('ל') && x('ל') > x('ו') && x('ו') > x('ם'), "Hebrew paints in visual RTL order");
