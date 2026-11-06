@@ -89,6 +89,7 @@ impl SlideApp {
             capture: capture::Capture::default(),
             styled: false,
             restyle: true,
+            appearance_dark: false,
             fonts_ready: false,
             last_time: 0.0,
             last_recovery: 0.0,

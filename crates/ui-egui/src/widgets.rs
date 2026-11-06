@@ -269,6 +269,9 @@ pub fn icon_toggle(ui: &mut Ui, icon: Icon, tip: &str, enabled: bool, on: bool) 
         painter.rect_filled(rect, CornerRadius::same(4), c);
     }
     icons::paint(&painter, rect.shrink(3.0), icon, t.text, !enabled);
+    if resp.has_focus() {
+        painter.rect_stroke(rect, CornerRadius::same(eridu_style::radius::SMALL), Stroke::new(2.0, t.accent), egui::StrokeKind::Inside);
+    }
     // Named for screen readers (and tests) by its tooltip.
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, tip));
     resp.on_hover_text(tip)

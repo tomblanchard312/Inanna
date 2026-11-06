@@ -44,10 +44,17 @@ fn crop_and_size_stay_on_screen_beside_the_picture_styles() {
     // the ribbon's edge there, and at 1920 px too.
     for width in [1440.0, 1920.0] {
         let (mut h, _) = picture_format(width);
-        if width == 1440.0
-            && let Ok(path) = std::env::var("INANNA_TEST_PICTURE_SCREENSHOT")
-        {
-            h.render().unwrap().save(path).unwrap();
+        if width == 1440.0 {
+            if let Ok(path) = std::env::var("INANNA_TEST_PICTURE_SCREENSHOT") {
+                h.state_mut().run("view.dark", json!({"on": false})).unwrap();
+                h.run_steps(4);
+                h.render().unwrap().save(path).unwrap();
+            }
+            if let Ok(path) = std::env::var("INANNA_TEST_ERIDU_DARK_SCREENSHOT") {
+                h.state_mut().run("view.dark", json!({"on": true})).unwrap();
+                h.run_steps(4);
+                h.render().unwrap().save(path).unwrap();
+            }
         }
         let edge = h.query_by_label("Scroll ribbon right").map_or(width, |n| n.rect().min.x);
         for label in ["Crop", "Height value", "Width value"] {

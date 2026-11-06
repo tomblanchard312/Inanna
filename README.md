@@ -8,6 +8,8 @@ The inherited editor includes slides, themes, shapes, charts, speaker notes, sli
 
 Latest upstream integration: [DeckCraft synchronization, 2026-11-02](docs/upstream-sync-2026-11-02.md).
 
+[EriduOS interface brief](docs/ERIDU_INTERFACE.md)
+
 ## Build from source
 
 ```sh

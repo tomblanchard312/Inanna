@@ -197,14 +197,21 @@ pub(super) fn account(app: &mut SlideApp, ui: &mut Ui) {
         ui.vertical(|ui| {
             ui.set_width(340.0);
             heading(ui, "Appearance");
-            let dark = app.ui.brightness == theme::Brightness::Dark;
+            let mode = app.ui.brightness;
             craft_ui::ComboBox::from_id_salt("backstage_appearance")
                 .width(260.0)
-                .selected_text(if dark { "Dark" } else { "Light" })
+                .selected_text(match mode {
+                    theme::Brightness::System => "System",
+                    theme::Brightness::Light => "Light",
+                    theme::Brightness::Dark => "Dark",
+                })
                 .show_ui(ui, |ui| {
-                    for (on, label) in [(false, "Light"), (true, "Dark")] {
-                        if ui.selectable_label(dark == on, label).clicked() {
-                            let _ = app.run("view.dark", json!({"on": on}));
+                    for (choice, label) in
+                        [(theme::Brightness::System, "System"), (theme::Brightness::Light, "Light"), (theme::Brightness::Dark, "Dark")]
+                    {
+                        if ui.selectable_label(mode == choice, label).clicked() {
+                            let _ =
+                                app.run("view.dark", json!({"on": choice == theme::Brightness::Dark, "system": choice == theme::Brightness::System}));
                         }
                     }
                 })
