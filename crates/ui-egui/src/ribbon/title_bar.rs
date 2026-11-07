@@ -87,8 +87,8 @@ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
             let _ = app.run("view.dark", json!({"on": !t.dark}));
         }
         let title_area = Rect::from_min_max(
-            pos2(child.min_rect().right() + eridu_style::space::SM, rect.top()),
-            pos2(right.min_rect().left() - eridu_style::space::SM, rect.bottom()),
+            pos2(child.min_rect().right() + crate::eridu_design::space::SM, rect.top()),
+            pos2(right.min_rect().left() - crate::eridu_design::space::SM, rect.bottom()),
         );
         if title_area.is_positive() {
             ui.painter().with_clip_rect(title_area).text(title_area.center(), Align2::CENTER_CENTER, title, theme::font(14.0), t.text);

@@ -171,7 +171,9 @@ fn infer(task: Task, prompt: String, context: String, ideas: Value, model: Strin
             vec![model]
         };
         if models.is_empty() {
-            return Err("Enki needs a local Phi-4 or Qwen text model installed in Enki.".into());
+            return Err(
+                "Enki has no registered Phi-4 or Qwen text model yet. If Enki just started, wait for model registration and try again.".into()
+            );
         }
         for (index, model) in models.iter().enumerate() {
             let result = async {
@@ -331,7 +333,7 @@ pub(crate) fn show(app: &mut SlideApp, ui: &mut egui::Ui) {
             ui.label("Presentation assistant");
             ui.small(scope.unwrap_or("Open a slide to start"));
             ui.small("Works locally on your device. Changes are applied only after your review.");
-            ui.add_space(eridu_style::space::MD);
+            ui.add_space(crate::eridu_design::space::MD);
             let busy = s.job.is_some();
             ui.add_enabled_ui(!busy, |ui| {
                 craft_ui::ComboBox::from_label("Task").selected_text(s.task.label()).show_ui(ui, |ui| {
@@ -354,7 +356,9 @@ pub(crate) fn show(app: &mut SlideApp, ui: &mut egui::Ui) {
                     ui.spinner();
                     ui.label("Enki is working…");
                 });
-                ui.small("Image generation can take several minutes.");
+                if s.task.picture() {
+                    ui.small("Image generation can take several minutes.");
+                }
                 if ui.button("Cancel").clicked() {
                     s.job = None;
                     s.status = "Cancelled".into();
@@ -365,7 +369,7 @@ pub(crate) fn show(app: &mut SlideApp, ui: &mut egui::Ui) {
             }
             ui.separator();
             if let Some(output) = &mut s.output {
-                ui.label(egui::RichText::new("Enki draft").font(crate::theme::bold(eridu_style::size::CARD_HEADING)));
+                ui.label(egui::RichText::new("Enki draft").font(crate::theme::bold(crate::eridu_design::size::CARD_HEADING)));
                 ui.small("Review before applying");
                 match output {
                     Output::Text(text) => {
