@@ -8,7 +8,7 @@ The GUI consumes semantic colors and base sizing from the pinned shared Eridu st
 
 Linux is the primary validation platform. FreeBSD is a secondary target. Windows, macOS and the browser are existing build targets with separate runtime acceptance. Illumos remains planned.
 
-[Eridu interface requirements](https://github.com/tomblanchard312/EriduOs/blob/53133f86434676a5bdcb249556d3c11b50e600e4/design-system/INTERFACE_RULES.md) · [Style guide](https://github.com/tomblanchard312/EriduOs/blob/53133f86434676a5bdcb249556d3c11b50e600e4/design-system/STYLE_GUIDE.md) · [Adoption checklist](https://github.com/tomblanchard312/EriduOs/blob/53133f86434676a5bdcb249556d3c11b50e600e4/design-system/ADOPTION.md)
+[Eridu interface requirements](https://github.com/tomblanchard312/TavruOS/blob/53133f86434676a5bdcb249556d3c11b50e600e4/design-system/INTERFACE_RULES.md) · [Style guide](https://github.com/tomblanchard312/TavruOS/blob/53133f86434676a5bdcb249556d3c11b50e600e4/design-system/STYLE_GUIDE.md) · [Adoption checklist](https://github.com/tomblanchard312/TavruOS/blob/53133f86434676a5bdcb249556d3c11b50e600e4/design-system/ADOPTION.md)
 
 ## Review evidence
 
@@ -28,5 +28,5 @@ button remained visible. This run exercised the editor and assistant panel.
 
 | Scope | Owner | Reason and follow-up |
 |---|---|---|
-| Specialized icons and display type | Inanna maintainers | Office commands without a matching Phosphor glyph retain their original icon. The compact ribbon keeps its sizing and large headings use Inter Semibold under the Source Serif asset exclusion. [Eridu typography tracking](https://github.com/tomblanchard312/EriduOs/issues/27) |
+| Specialized icons and display type | Inanna maintainers | Office commands without a matching Phosphor glyph retain their original icon. The compact ribbon keeps its sizing and large headings use Inter Semibold under the Source Serif asset exclusion. [Eridu typography tracking](https://github.com/tomblanchard312/TavruOS/issues/27) |
 | Native accessibility and workflow acceptance | Inanna maintainers | Test screen readers, reduced motion, localized text expansion, and FreeBSD installation. Track findings using the adoption checklist linked above. |

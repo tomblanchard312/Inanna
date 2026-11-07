@@ -97,4 +97,4 @@ in craft-fonts, including the LXGW Reserved Font Names and original Klee notice.
 | `vendor/eridu-fonts/JetBrainsMono-Regular.ttf` | JetBrains Mono Project Authors | Same Eridu style snapshot | OFL-1.1 | Technical UI text |
 | `vendor/eridu-fonts/phosphor/*.ttf` | Phosphor Icons | Phosphor 2.1.1 from the same Eridu style snapshot | MIT | Regular and selected interface icons |
 | `vendor/eridu-fonts/eridu-icons/*.ttf` | Eridu style contributors | Same Eridu style snapshot | MIT | Supplemental icons |
-| `assets/icons/enki.png` | EriduOS contributors | [EriduOS 799db31](https://github.com/tomblanchard312/EriduOs/blob/799db317dd4df4292636c16696d19157896cdb95/integration/code-enki/enki-48.png) | EriduOS project artwork | Enki toolbar and panel mark |
+| `assets/icons/enki.png` | EriduOS contributors | [EriduOS 799db31](https://github.com/tomblanchard312/TavruOS/blob/799db317dd4df4292636c16696d19157896cdb95/integration/code-enki/enki-48.png) | EriduOS project artwork | Enki toolbar and panel mark |
